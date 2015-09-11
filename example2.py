@@ -54,14 +54,20 @@ class GLAPP(object):
 
         self.shader_program = ShaderProgram(VS, FS)
         self.data = data
-        self.vbo = glvbo.VBO(self.data, target=gl.GL_ELEMENT_ARRAY_BUFFER)
+        # self.vbo = glvbo.VBO(self.data, target=gl.GL_ELEMENT_ARRAY_BUFFER)
 
-        self.vao = gl.glGenVertexArrays(1)
-        # gl.glBindVertexArray(self.vao)
+        self.VAO = gl.glGenVertexArrays(1)
+        gl.glBindVertexArray(self.VAO)
 
         glut.glutReshapeFunc(self.reshape)
         glut.glutKeyboardFunc(self.keyboard)
         glut.glutDisplayFunc(self.display)
+
+        self.VBO = gl.glGenBuffers(1)
+        gl.glBindBuffer(gl.GL_ARRAY_BUFFER, self.VBO)
+        gl.glBufferData(gl.GL_ARRAY_BUFFER, data.nbytes, data, gl.GL_STATIC_DRAW)
+        gl.glEnableVertexAttribArray(0)
+        gl.glVertexAttribPointer(0, 4, gl.GL_FLOAT, gl.GL_FALSE, 0, None)
 
     def loop(self):
         glut.glutMainLoop()
@@ -69,41 +75,21 @@ class GLAPP(object):
     def display(self):
         # clear the buffer
         gl.glClear(gl.GL_COLOR_BUFFER_BIT)
+        gl.glBindVertexArray(self.VAO)
 
-        # bind the VBO
-        self.vbo.bind()
-        gl.glBindVertexArray(self.vao)
-
+        gl.glBindBuffer(gl.GL_ARRAY_BUFFER, self.VBO)
         try:
-            # # tell OpenGL that the VBO contains an array of vertices
-            # # # prepare the shader
-            # gl.glEnableVertexAttribArray(0)
-            # # these vertices contain 2 single precision coordinates
             gl.glVertexAttribPointer(0, 2, gl.GL_FLOAT, gl.GL_FALSE, 0, None)
-            #
-            #
-            # self.position_location = gl.glGetAttribLocation(
-            #     self.shader_program.program, 'position'
-            # )
-            #
-            # gl.glVertexAttribPointer(
-            #     self.position_location,
-            #     2, gl.GL_FLOAT, gl.GL_FALSE, 0, self.vbo
-            # )
-            # gl.glEnableVertexAttribArray(self.position_location)
-
             gl.glUseProgram(self.shader_program.program)
 
             # draw "count" points from the VBO
             gl.glDrawArrays(gl.GL_LINE_STRIP, 0, len(self.data))
 
-
         finally:
-            self.vbo.unbind()
             gl.glBindVertexArray(0)
-
             gl.glUseProgram(0)
-
+            gl.glBindBuffer(gl.GL_ARRAY_BUFFER, 0)
+            glut.glutSwapBuffers()
 
     @staticmethod
     def reshape(width, height):
