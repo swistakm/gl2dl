@@ -8,36 +8,59 @@ import OpenGL.GLUT as glut
 import OpenGL.GLU as glu
 import OpenGL.arrays.vbo as glvbo
 
-# Vertex shader
 from shader import ShaderProgram
 
+# Vertex shader
 VS = """
 #version 330 core
-// Attribute variable that contains coordinates of the vertices.
-layout(location = 0) in vec2 position;
 
-// Main function, which needs to set `gl_Position`.
+layout(location = 0) in vec3 position;
+out vec4 g_vertex_color;
+
 void main()
 {
-    // The final position is transformed from a null signal to a sinewave here.
-    // We pass the position to gl_Position, by converting it into
-    // a 4D vector. The last coordinate should be 0 when rendering 2D figures.
-    gl_Position = vec4(position.x, .2 * sin(20 * position.x), 0., 1.);
+     gl_Position.xy = position.xy;
+     gl_Position.z = 0;
+     gl_Position.w = 1;
+
+    g_vertex_color.rg = (position.xy + 1.0) / 2.;
+    g_vertex_color.b = 0.3;
+}
+"""
+
+# Geometry shader
+GS = """
+#version 330 core
+
+layout(triangles) in;
+layout(triangle_strip, max_vertices = 3) out;
+
+in vec4 g_vertex_color[];
+out vec4 vertex_color;
+
+void main() {
+  for(int i = 0; i < 3; i++) { // You used triangles, so it's always 3
+    vertex_color = g_vertex_color[i];
+    gl_Position = gl_in[i].gl_Position;
+    gl_Position.xyz /= 2;
+    EmitVertex();
+  }
+  EndPrimitive();
 }
 """
 
 # Fragment shader
 FS = """
 #version 330 core
-// Output variable of the fragment shader, which is a 4D vector containing the
-// RGBA components of the pixel color.
-out vec4 out_color;
 
-// Main fragment shader function.
+out vec4 out_color;
+in vec4 vertex_color;
+
 void main()
 {
-    // We simply set the pixel color to yellow.
-    out_color = vec4(1., 1., 0., 1.);
+    // out_color.rgb = gl_FragCoord.xzy;
+    out_color.a = 120.0001;
+    out_color = vertex_color;
 }
 """
 
@@ -52,7 +75,7 @@ class GLAPP(object):
         glut.glutCreateWindow('Hello world!')
         glut.glutReshapeWindow(512, 512)
 
-        self.shader_program = ShaderProgram(VS, FS)
+        self.shader_program = ShaderProgram(VS, FS, GS)
         self.data = data
         # self.vbo = glvbo.VBO(self.data, target=gl.GL_ELEMENT_ARRAY_BUFFER)
 
@@ -79,11 +102,11 @@ class GLAPP(object):
 
         gl.glBindBuffer(gl.GL_ARRAY_BUFFER, self.VBO)
         try:
-            gl.glVertexAttribPointer(0, 2, gl.GL_FLOAT, gl.GL_FALSE, 0, None)
+            gl.glVertexAttribPointer(0, 3, gl.GL_FLOAT, gl.GL_FALSE, 0, None)
             gl.glUseProgram(self.shader_program.program)
 
             # draw "count" points from the VBO
-            gl.glDrawArrays(gl.GL_LINE_STRIP, 0, len(self.data))
+            gl.glDrawArrays(gl.GL_TRIANGLES, 0, len(self.data))
 
         finally:
             gl.glBindVertexArray(0)
@@ -104,8 +127,11 @@ class GLAPP(object):
 if __name__ == '__main__':
     import sys
     import numpy as np
-    # null signal
-    data = np.zeros((10000, 2), dtype=np.float32)
-    data[:, 0] = np.linspace(-1., 1., len(data))
+    data = np.array([
+        [-1, -1, 0],
+        [0, 1, 0],
+        [1, -1, 0],
+        ], dtype=np.float32
+    )
 
     GLAPP(data).loop()
