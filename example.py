@@ -13,6 +13,8 @@ from shader import ShaderProgram
 # Vertex shader
 VS = """
 #version 330 core
+uniform float blue_level;
+
 
 layout(location = 0) in vec3 position;
 out vec4 g_vertex_color;
@@ -23,8 +25,8 @@ void main()
      gl_Position.z = 0;
      gl_Position.w = 1;
 
-    g_vertex_color.rg = (position.xy + 1.0) / 2.;
-    g_vertex_color.b = 0.3;
+    g_vertex_color.rg = (position.xy + 1.0) / 1.;
+    g_vertex_color.b = blue_level;
 }
 """
 
@@ -76,6 +78,7 @@ class GLAPP(object):
         glut.glutReshapeWindow(512, 512)
 
         self.shader_program = ShaderProgram(VS, FS, GS)
+
         self.data = data
         # self.vbo = glvbo.VBO(self.data, target=gl.GL_ELEMENT_ARRAY_BUFFER)
 
@@ -93,10 +96,17 @@ class GLAPP(object):
         gl.glVertexAttribPointer(0, 4, gl.GL_FLOAT, gl.GL_FALSE, 0, None)
 
     def loop(self):
+        gl.glUseProgram(self.shader_program.program)
+
+        loc = gl.glGetUniformLocation(self.shader_program.program, 'blue_level')
+        gl.glUniform1f(loc, .92)
+        gl.glUseProgram(0)
+
         glut.glutMainLoop()
 
     def display(self):
         # clear the buffer
+        gl.glClearColor(255, 255, 255, 0)
         gl.glClear(gl.GL_COLOR_BUFFER_BIT)
         gl.glBindVertexArray(self.VAO)
 
@@ -106,7 +116,7 @@ class GLAPP(object):
             gl.glUseProgram(self.shader_program.program)
 
             # draw "count" points from the VBO
-            gl.glDrawArrays(gl.GL_TRIANGLES, 0, len(self.data))
+            gl.glDrawArrays(gl.GL_TRIANGLE_FAN, 0, len(self.data))
 
         finally:
             gl.glBindVertexArray(0)
@@ -129,9 +139,10 @@ if __name__ == '__main__':
     import numpy as np
     data = np.array([
         [-1, -1, 0],
-        [0, 1, 0],
+        [-1, 1, 0],
+        [1, 1, 0],
         [1, -1, 0],
         ], dtype=np.float32
-    )
+    ) / 1.
 
     GLAPP(data).loop()
