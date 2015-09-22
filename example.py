@@ -152,6 +152,7 @@ class GLAPP(object):
         glut.glutPassiveMotionFunc(self.on_mouse_move)
 
     def on_mouse_move(self, x, y):
+        self.lshader_program.bind()
         self.lshader_program['light_position'] = (
             (float(2 * x) / self.width) - 1,
             - (float(2 * y) / self.height) + 1,
@@ -163,9 +164,11 @@ class GLAPP(object):
         glut.glutPostRedisplay()
 
     def loop(self):
+        self.shader_program.bind()
         self.shader_program['blue_level'] = 0.9
 
-        print self.shader_program['blue_level']
+        self.lshader_program.bind()
+        self.lshader_program['light_position'] = [1, 1, 1]
 
         glut.glutMainLoop()
 
@@ -174,8 +177,8 @@ class GLAPP(object):
         gl.glClearColor(255, 255, 255, 0)
         gl.glClear(gl.GL_COLOR_BUFFER_BIT)
         gl.glBindVertexArray(self.VAO)
-
         gl.glBindBuffer(gl.GL_ARRAY_BUFFER, self.VBO)
+
         try:
             gl.glVertexAttribPointer(0, 3, gl.GL_FLOAT, gl.GL_FALSE, 0, None)
 

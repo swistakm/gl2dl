@@ -1,26 +1,81 @@
 # -*- coding: utf-8 -*-
+from functools import wraps
+
 import OpenGL.GL as gl
+
+
+def _(fun):
+    """
+    Wrap matrix uniform function so it has exactly the same
+    call arguments layout as other uniform (*v) functions
+    """
+    @wraps(fun)
+    def wrapped_matrix_uniform(location, count, value):
+        fun(location, count, True, value)
+
+    return wrapped_matrix_uniform
 
 
 class ShaderCompilationError(RuntimeError):
     """Raised when GLSL shader compilation error occurs"""
 
 
+def unpack_ctypes(value):
+    """ Convert ctypes arrays to normal python list if value is an ctypes
+    array
+    """
+    # hack: this works because we know how ctypes array would behave
+    #       in fact we do not care if this is really a ctypes array
+    # todo: think about better approach
+    return list(value) if hasattr(value, '__getitem__') else value
+
+
 class ShaderProgram(object):
     """
-    Todo:
-    * rename .program to .handle
-    * write bind/unbind methods
-
     """
 
     VERTEX = gl.GL_VERTEX_SHADER
     FRAGMENT = gl.GL_FRAGMENT_SHADER
     GEOMETRY = gl.GL_GEOMETRY_SHADER
 
-    UNIFORM_TYPES = {
-        gl.GL_FLOAT: (gl.glProgramUniform1f, gl.glGetUniformfv),
-        gl.GL_FLOAT_VEC3: (gl.glProgramUniform3f, gl.glGetUniformfv)
+    TYPE_CONST_TO_SET_GET_TYPE = {
+
+        gl.GL_BOOL:      (gl.glUniform1uiv, gl.glGetUniformuiv, gl.GLuint),
+        gl.GL_BOOL_VEC2: (gl.glUniform2uiv, gl.glGetUniformuiv, gl.GLuint * 2),  # noqa
+        gl.GL_BOOL_VEC3: (gl.glUniform3uiv, gl.glGetUniformuiv, gl.GLuint * 3),  # noqa
+        gl.GL_BOOL_VEC4: (gl.glUniform4uiv, gl.glGetUniformuiv, gl.GLuint * 4),  # noqa
+
+        gl.GL_UNSIGNED_INT:      (gl.glUniform1uiv, gl.glGetUniformuiv, gl.GLuint),  # noqa
+        gl.GL_UNSIGNED_INT_VEC2: (gl.glUniform2uiv, gl.glGetUniformuiv, gl.GLuint * 2),  # noqa
+        gl.GL_UNSIGNED_INT_VEC3: (gl.glUniform3uiv, gl.glGetUniformuiv, gl.GLuint * 3),  # noqa
+        gl.GL_UNSIGNED_INT_VEC4: (gl.glUniform4uiv, gl.glGetUniformuiv, gl.GLuint * 4),  # noqa
+
+        gl.GL_INT: (gl.glUniform1iv, gl.glGetUniformiv, gl.GLint),
+        gl.GL_INT_VEC2: (gl.glUniform2iv, gl.glGetUniformiv, gl.GLint * 2),
+        gl.GL_INT_VEC3: (gl.glUniform3iv, gl.glGetUniformiv, gl.GLint * 3),
+        gl.GL_INT_VEC4: (gl.glUniform4iv, gl.glGetUniformiv, gl.GLint * 4),
+
+        gl.GL_FLOAT: (gl.glUniform1fv, gl.glGetUniformfv, gl.GLfloat),
+        gl.GL_FLOAT_VEC2: (gl.glUniform2fv, gl.glGetUniformfv, gl.GLfloat_2),
+        gl.GL_FLOAT_VEC3: (gl.glUniform3fv, gl.glGetUniformfv, gl.GLfloat_3),
+        gl.GL_FLOAT_VEC4: (gl.glUniform4fv, gl.glGetUniformfv, gl.GLfloat_4),
+
+        gl.GL_FLOAT_MAT2: (_(gl.glUniformMatrix2fv), gl.glGetUniformfv, gl.GLfloat * 4),  # noqa
+        gl.GL_FLOAT_MAT3: (_(gl.glUniformMatrix3fv), gl.glGetUniformfv, gl.GLfloat * 9),  # noqa
+        gl.GL_FLOAT_MAT4: (_(gl.glUniformMatrix4fv), gl.glGetUniformfv, gl.GLfloat * 16),  # noqa
+
+        gl.GL_FLOAT_MAT2x3: (_(gl.glUniformMatrix2x3fv), gl.glGetUniformfv, gl.GLfloat * 6),  # noqa
+        gl.GL_FLOAT_MAT2x4: (_(gl.glUniformMatrix2x3fv), gl.glGetUniformfv, gl.GLfloat * 8),  # noqa
+
+        gl.GL_FLOAT_MAT3x2: (_(gl.glUniformMatrix3x2fv), gl.glGetUniformfv, gl.GLfloat * 6),  # noqa
+        gl.GL_FLOAT_MAT3x4: (_(gl.glUniformMatrix3x4fv), gl.glGetUniformfv, gl.GLfloat * 12),  # noqa
+
+        gl.GL_FLOAT_MAT4x2: (_(gl.glUniformMatrix4x2fv), gl.glGetUniformfv, gl.GLfloat * 8),  # noqa
+        gl.GL_FLOAT_MAT4x3: (_(gl.glUniformMatrix4x3fv), gl.glGetUniformfv, gl.GLfloat * 12),  # noqa
+
+        gl.GL_SAMPLER_1D: (gl.glUniform1iv, gl.glGetUniformiv, gl.GLuint),
+        gl.GL_SAMPLER_2D: (gl.glUniform1iv, gl.glGetUniformiv, gl.GLuint),
+        gl.GL_SAMPLER_3D: (gl.glUniform1iv, gl.glGetUniformiv, gl.GLuint),
     }
 
     def __init__(
@@ -34,7 +89,7 @@ class ShaderProgram(object):
         else:
             self.geometry = None
 
-        self.program = self._link_shader_program(
+        self.handle = self._link_shader_program(
             self.vertex, self.fragment, self.geometry
         )
 
@@ -44,47 +99,52 @@ class ShaderProgram(object):
         if key in self._uniforms:
             size, gl_type = self._uniforms[key]
 
-            location = gl.glGetUniformLocation(self.program, key)
-            setter, getter = self.UNIFORM_TYPES[gl_type]
+            location = gl.glGetUniformLocation(self.handle, key)
+            setter, getter, __ = self.TYPE_CONST_TO_SET_GET_TYPE[gl_type]
 
-            if isinstance(value, (list, tuple)):
-                setter(self.program, location, *value)
-            else:
-                setter(self.program, location, value)
+            setter(location, size, value)
 
         else:
-            KeyError("No active uniform of name: {}".format(key))
+            raise KeyError("No active uniform of name: {}".format(key))
 
     def __getitem__(self, key):
         if key in self._uniforms:
             size, gl_type = self._uniforms[key]
+            setter, getter, GLType = self.TYPE_CONST_TO_SET_GET_TYPE[gl_type]
 
-            location = gl.glGetUniformLocation(self.program, key)
-            setter, getter = self.UNIFORM_TYPES[gl_type]
-            # todo: introspect type
-            value = (gl.GLfloat * size)()
-            getter(self.program, location, value)
-            return list(value)
+            location = gl.glGetUniformLocation(self.handle, key)
+            result = (GLType * size)()
+            getter(self.handle, location, result)
+
+            # Bacause we have same code/interface for dealing with arrays
+            # and single-value uniforms do some unpacking so dynamically
+            # typed minds won't be surprised
+            return list(
+                unpack_ctypes(elem) for elem in result
+            ) if size > 1 else unpack_ctypes(result[0])
 
         else:
-            KeyError("No active uniform of name: {}".format(key))
+            raise KeyError("No active uniform of name: {}".format(key))
 
     def _prepare_uniforms(self):
         uniforms = {}
 
         nr_uniforms = gl.GLint()
-        gl.glGetProgramiv(self.program, gl.GL_ACTIVE_UNIFORMS, nr_uniforms)
+        gl.glGetProgramiv(self.handle, gl.GL_ACTIVE_UNIFORMS, nr_uniforms)
 
         for uniform_index in xrange(nr_uniforms.value):
             name, size, gl_type = gl.glGetActiveUniform(
-                self.program,
+                self.handle,
                 uniform_index,
             )
+            # we know we are dealing with array and returned name will have
+            # '[0]' at the end that we don't want to have in uniforms dict
+            if size > 1 and '[0]' in name:
+                name = name[:-3]
+
             uniforms[name] = size, gl_type
 
-        print uniforms
         return uniforms
-
 
     @staticmethod
     def _create_shader(code, shader_type):
@@ -118,7 +178,7 @@ class ShaderProgram(object):
         return program
 
     def bind(self):
-        gl.glUseProgram(self.program)
+        gl.glUseProgram(self.handle)
 
     @staticmethod
     def unbind():
