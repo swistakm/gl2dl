@@ -44,7 +44,6 @@ void main() {
   for(int i = 0; i < 3; i++) { // You used triangles, so it's always 3
     vertex_color = g_vertex_color[i];
     gl_Position = gl_in[i].gl_Position;
-    gl_Position.xyz /= 1;
     EmitVertex();
   }
   EndPrimitive();
@@ -63,6 +62,18 @@ layout(triangle_strip, max_vertices = 24) out;
 in vec4 g_vertex_color[];
 out vec4 vertex_color;
 
+
+/* extrapolate point on line p1-p2 in distance 'dist' from p2 */
+vec3 extrapolate(vec3 p1, vec3 p2, float dist) {
+    return 2 * (p2 - p1) / distance(p2, p1) + p2;
+}
+
+/* mirror 'point' over given symmetry 'center' */
+vec3 mirror(vec3 point, vec3 center) {
+    return 2 * center - point;
+}
+
+
 void main() {
     int k;
     for (int i=0; i<3; i++){
@@ -72,7 +83,8 @@ void main() {
         vertex_color = vec4(.2, .2, .2, 0);
         EmitVertex();
 
-        gl_Position.xyz =  2 * gl_in[i].gl_Position.xyz - light_position;
+//        gl_Position.xyz = mirror(light_position, gl_in[i].gl_Position.xyz);
+        gl_Position.xyz = extrapolate(light_position, gl_in[i].gl_Position.xyz, 1);
         vertex_color = vec4(.2, .2, .2, 0);
         EmitVertex();
 
@@ -80,7 +92,8 @@ void main() {
         vertex_color = vec4(.2, .2, .2, 0);
         EmitVertex();
 
-        gl_Position.xyz =  2 * gl_in[k].gl_Position.xyz - light_position;
+//        gl_Position.xyz = mirror(light_position, gl_in[k].gl_Position.xyz);
+        gl_Position.xyz = extrapolate(light_position, gl_in[k].gl_Position.xyz, 1);
         vertex_color = vec4(.2, .2, .2, 0);
         EmitVertex();
     }
@@ -136,16 +149,13 @@ class GLAPP(object):
 
         glut.glutTimerFunc(1000/60, self.timer, 60)
         glut.glutMotionFunc(self.on_mouse_move)
+        glut.glutPassiveMotionFunc(self.on_mouse_move)
 
     def on_mouse_move(self, x, y):
-        gl.glUseProgram(self.lshader_program.program)
-
-        loc = gl.glGetUniformLocation(self.lshader_program.program, 'light_position')
-        gl.glUniform3f(
-            loc,
+        self.lshader_program['light_position'] = (
             (float(2 * x) / self.width) - 1,
             - (float(2 * y) / self.height) + 1,
-            0
+            0,
         )
 
     def timer(self, fps):
@@ -153,15 +163,9 @@ class GLAPP(object):
         glut.glutPostRedisplay()
 
     def loop(self):
-        gl.glUseProgram(self.shader_program.program)
-        loc = gl.glGetUniformLocation(self.shader_program.program, 'blue_level')
-        gl.glUniform1f(loc, .10)
+        self.shader_program['blue_level'] = 0.9
 
-        gl.glUseProgram(self.lshader_program.program)
-        loc = gl.glGetUniformLocation(self.lshader_program.program, 'blue_level')
-        gl.glUniform1f(loc, .80)
-        loc = gl.glGetUniformLocation(self.lshader_program.program, 'light_position')
-        gl.glUniform3f(loc, 0, -0.30, 0)
+        print self.shader_program['blue_level']
 
         glut.glutMainLoop()
 
@@ -175,17 +179,18 @@ class GLAPP(object):
         try:
             gl.glVertexAttribPointer(0, 3, gl.GL_FLOAT, gl.GL_FALSE, 0, None)
 
-            gl.glUseProgram(self.lshader_program.program)
+            self.lshader_program.bind()
             # draw "count" points from the VBO
             gl.glDrawArrays(gl.GL_TRIANGLES, 0, len(self.data))
 
-            gl.glUseProgram(self.shader_program.program)
+            self.shader_program.bind()
             # draw "count" points from the VBO
             gl.glDrawArrays(gl.GL_TRIANGLES, 0, len(self.data))
 
         finally:
             gl.glBindVertexArray(0)
             gl.glUseProgram(0)
+
             gl.glBindBuffer(gl.GL_ARRAY_BUFFER, 0)
             glut.glutSwapBuffers()
 
