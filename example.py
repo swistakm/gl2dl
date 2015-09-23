@@ -9,6 +9,7 @@ import OpenGL.GLU as glu
 import OpenGL.arrays.vbo as glvbo
 
 from shader import ShaderProgram
+from lights import Glight
 
 # Vertex shader
 VS = """
@@ -132,24 +133,24 @@ class GLAPP(object):
         self.lshader_program = ShaderProgram(VS, FS, LGS)
 
         self.data = data
-        # self.vbo = glvbo.VBO(self.data, target=gl.GL_ELEMENT_ARRAY_BUFFER)
-
-        self.VAO = gl.glGenVertexArrays(1)
-        gl.glBindVertexArray(self.VAO)
 
         glut.glutReshapeFunc(self.reshape)
         glut.glutKeyboardFunc(self.keyboard)
         glut.glutDisplayFunc(self.display)
 
+        glut.glutTimerFunc(1000/60, self.timer, 60)
+        glut.glutMotionFunc(self.on_mouse_move)
+        glut.glutPassiveMotionFunc(self.on_mouse_move)
+
+        self.VAO = gl.glGenVertexArrays(1)
+        gl.glBindVertexArray(self.VAO)
+
         self.VBO = gl.glGenBuffers(1)
         gl.glBindBuffer(gl.GL_ARRAY_BUFFER, self.VBO)
         gl.glBufferData(gl.GL_ARRAY_BUFFER, data.nbytes, data, gl.GL_STATIC_DRAW)
         gl.glEnableVertexAttribArray(0)
-        gl.glVertexAttribPointer(0, 4, gl.GL_FLOAT, gl.GL_FALSE, 0, None)
 
-        glut.glutTimerFunc(1000/60, self.timer, 60)
-        glut.glutMotionFunc(self.on_mouse_move)
-        glut.glutPassiveMotionFunc(self.on_mouse_move)
+        self.light = Glight((1, .5, .5), (0, 0, 0))
 
     def on_mouse_move(self, x, y):
         self.lshader_program.bind()
@@ -174,8 +175,9 @@ class GLAPP(object):
 
     def display(self):
         # clear the buffer
-        gl.glClearColor(255, 255, 255, 0)
+        gl.glClearColor(0, 0, 0, 0)
         gl.glClear(gl.GL_COLOR_BUFFER_BIT)
+
         gl.glBindVertexArray(self.VAO)
         gl.glBindBuffer(gl.GL_ARRAY_BUFFER, self.VBO)
 
@@ -190,6 +192,7 @@ class GLAPP(object):
             # draw "count" points from the VBO
             gl.glDrawArrays(gl.GL_TRIANGLES, 0, len(self.data))
 
+            # self.light.draw()
         finally:
             gl.glBindVertexArray(0)
             gl.glUseProgram(0)
