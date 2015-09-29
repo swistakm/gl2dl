@@ -76,26 +76,27 @@ vec3 mirror(vec3 point, vec3 center) {
 
 
 void main() {
+    vec4 shadow_color = vec4(1, 1, 1, 1);
     int k;
     for (int i=0; i<3; i++){
         k = i<2 ? i+1 : 0;
 
         gl_Position = gl_in[i].gl_Position;
-        vertex_color = vec4(.2, .2, .2, 0);
+        vertex_color = shadow_color;
         EmitVertex();
 
 //        gl_Position.xyz = mirror(light_position, gl_in[i].gl_Position.xyz);
         gl_Position.xyz = extrapolate(light_position, gl_in[i].gl_Position.xyz, 1);
-        vertex_color = vec4(.2, .2, .2, 0);
+        vertex_color = shadow_color;
         EmitVertex();
 
         gl_Position = gl_in[k].gl_Position;
-        vertex_color = vec4(.2, .2, .2, 0);
+        vertex_color = shadow_color;
         EmitVertex();
 
 //        gl_Position.xyz = mirror(light_position, gl_in[k].gl_Position.xyz);
         gl_Position.xyz = extrapolate(light_position, gl_in[k].gl_Position.xyz, 1);
-        vertex_color = vec4(.2, .2, .2, 0);
+        vertex_color = shadow_color;
         EmitVertex();
     }
 }
@@ -150,6 +151,38 @@ class GLAPP(object):
         gl.glBufferData(gl.GL_ARRAY_BUFFER, data.nbytes, data, gl.GL_STATIC_DRAW)
         gl.glEnableVertexAttribArray(0)
 
+        # -- start fbo and texture target --
+        self.FBO_TARGET = gl.glGenTextures(1)
+        # "Bind" the newly created texture : all future texture functions
+        # will modify this texture
+        gl.glBindTexture(gl.GL_TEXTURE_2D, self.FBO_TARGET)
+        # Give an empty image to OpenGL ( the last "0" )
+        gl.glTexImage2D(
+            gl.GL_TEXTURE_2D, 0, gl.GL_RGBA,
+            1024, 768, 0, gl.GL_RGBA, gl.GL_UNSIGNED_BYTE, None
+        )
+        # Poor filtering. Needed !
+        gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_MAG_FILTER, gl.GL_NEAREST)
+        gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_MIN_FILTER, gl.GL_NEAREST)
+        gl.glBindTexture(gl.GL_TEXTURE_2D, 0)
+
+        # Set "renderedTexture" as our colour attachement #0
+        self.FBO = gl.glGenFramebuffers(1)
+        gl.glBindFramebuffer(gl.GL_FRAMEBUFFER, self.FBO)
+        gl.glFramebufferTexture(
+            gl.GL_FRAMEBUFFER, gl.GL_COLOR_ATTACHMENT0, self.FBO_TARGET, 0
+        )
+
+        status = gl.glCheckFramebufferStatus(gl.GL_FRAMEBUFFER)
+
+        if status != gl.GL_FRAMEBUFFER_COMPLETE:
+            print "framebuffer status faile"
+            exit()
+        else:
+            print "framebuffer status", status
+        gl.glBindFramebuffer(gl.GL_FRAMEBUFFER, 0)
+        # -- end fbo --
+
         self.light = Glight((1, .5, .5), (0, 0, 0))
 
     def on_mouse_move(self, x, y):
@@ -159,6 +192,9 @@ class GLAPP(object):
             - (float(2 * y) / self.height) + 1,
             0,
         )
+        self.light.color = 1, 1, 1
+        self.light.position = x, self.height - y
+        self.light.radius = 50
 
     def timer(self, fps):
         glut.glutTimerFunc(1000/fps, self.timer, fps)
@@ -178,26 +214,48 @@ class GLAPP(object):
         gl.glClearColor(0, 0, 0, 0)
         gl.glClear(gl.GL_COLOR_BUFFER_BIT)
 
-        gl.glBindVertexArray(self.VAO)
-        gl.glBindBuffer(gl.GL_ARRAY_BUFFER, self.VBO)
-
         try:
+            # gl.glBindFramebuffer(gl.GL_FRAMEBUFFER, self.FBO)
+            gl.glClear(gl.GL_COLOR_BUFFER_BIT)
+
+            # draw lights
+            self.light.draw()
+
+            gl.glEnable(gl.GL_BLEND)
+            gl.glBlendEquationSeparate(gl.GL_FUNC_REVERSE_SUBTRACT, gl.GL_MIN)
+
+            # draw occluded shadows
+            gl.glBindVertexArray(self.VAO)
+            gl.glBindBuffer(gl.GL_ARRAY_BUFFER, self.VBO)
+            gl.glVertexAttribPointer(0, 3, gl.GL_FLOAT, gl.GL_FALSE, 0, None)
+            self.lshader_program.bind()
+            gl.glDrawArrays(gl.GL_TRIANGLES, 0, len(self.data))
+
+            # disable blending for now
+            gl.glDisable(gl.GL_BLEND)
+            # gl.glBindFramebuffer(gl.GL_FRAMEBUFFER, 0)
+
+            # draw occluders polygons
+            gl.glBindVertexArray(self.VAO)
+            gl.glBindBuffer(gl.GL_ARRAY_BUFFER, self.VBO)
             gl.glVertexAttribPointer(0, 3, gl.GL_FLOAT, gl.GL_FALSE, 0, None)
 
-            self.lshader_program.bind()
-            # draw "count" points from the VBO
-            gl.glDrawArrays(gl.GL_TRIANGLES, 0, len(self.data))
-
             self.shader_program.bind()
-            # draw "count" points from the VBO
             gl.glDrawArrays(gl.GL_TRIANGLES, 0, len(self.data))
 
-            # self.light.draw()
+
+
+        except Exception as err:
+            print err
+            exit(1)
+
         finally:
             gl.glBindVertexArray(0)
             gl.glUseProgram(0)
 
             gl.glBindBuffer(gl.GL_ARRAY_BUFFER, 0)
+            gl.glBindFramebuffer(gl.GL_FRAMEBUFFER, 0)
+
             glut.glutSwapBuffers()
 
     def reshape(self, width, height):
