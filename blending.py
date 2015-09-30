@@ -1,28 +1,86 @@
 # -*- coding: utf-8 -*-
-import contextlib
+from contextlib import contextmanager
 
-from functools import partial
-import sys
-import ctypes
-import numpy as np
 import OpenGL.GL as gl
-import OpenGL.GLUT as glut
-import OpenGL.GLU as glu
-import OpenGL.arrays.vbo as glvbo
 
 
-REVERSE_SUBTRACT = gl.GL_FUNC_REVERSE_SUBTRACT
-SUBTRACT = gl.GL_FUNC_SUBTRACT
-MIN = gl.GL_MIN
-MAX = gl.GL_MAX
-ADD = gl.GL_FUNC_ADD
+class Mode(object):
+    REVERSE_SUBTRACT = gl.GL_FUNC_REVERSE_SUBTRACT
+    SUBTRACT = gl.GL_FUNC_SUBTRACT
+    MIN = gl.GL_MIN
+    MAX = gl.GL_MAX
+    ADD = gl.GL_FUNC_ADD
 
 
-@contextlib.contextmanager
-def blending_separate(color, alpha):
+class Factor(object):
+    ZERO = gl.GL_ZERO
+    ONE = gl.GL_ONE
+    SRC_COLOR = gl.GL_SRC_COLOR
+    ONE_MINUS_SRC_COLOR = gl.GL_ONE_MINUS_SRC_COLOR
+    DST_COLOR = gl.GL_DST_COLOR
+    ONE_MINUS_DST_COLOR = gl.GL_ONE_MINUS_DST_COLOR
+    SRC_ALPHA = gl.GL_SRC_ALPHA
+    ONE_MINUS_SRC_ALPHA = gl.GL_ONE_MINUS_SRC_ALPHA
+    DST_ALPHA = gl.GL_DST_ALPHA
+    ONE_MINUS_DST_ALPHA = gl.GL_ONE_MINUS_DST_ALPHA
+    CONSTANT_COLOR = gl.GL_CONSTANT_COLOR
+
+    ONE_MINUS_CONSTANT_COLOR = gl.GL_ONE_MINUS_CONSTANT_COLOR
+    CONSTANT_ALPHA = gl.GL_CONSTANT_ALPHA
+    ONE_MINUS_CONSTANT_ALPHA = gl.GL_ONE_MINUS_CONSTANT_ALPHA
+
+
+@contextmanager
+def blending_rgba(
+        rgb_source=Factor.ONE,
+        rgb_destination=Factor.ZERO,
+
+        alpha_source=Factor.ONE,
+        alpha_destination=Factor.ZERO,
+
+        rgb_mode=Mode.ADD,
+        alpha_mode=Mode.ADD,
+):
+    """ **Important:** does not support nesting yet
+    :param rgb_source:
+    :param rgb_destination:
+    :param alpha_source:
+    :param alpha_destination:
+    :param rgb_mode:
+    :param alpha_mode:
+    :return:
+    """
+
+    print rgb_source, rgb_destination
     gl.glEnable(gl.GL_BLEND)
-    gl.glBlendEquationSeparate(color, alpha)
+    gl.glBlendEquationSeparate(rgb_mode, alpha_mode)
+    gl.glBlendFuncSeparate(
+        rgb_source, rgb_destination,
+        alpha_source, alpha_destination
+    )
 
     yield
 
     gl.glDisable(gl.GL_BLEND)
+
+
+@contextmanager
+def blending(
+        source=Factor.ONE,
+        destination=Factor.ZERO,
+        mode=Mode.ADD,
+):
+    """ **Important:** does not support nesting yet
+    :param source:
+    :param destination:
+    :param mode:
+    :return:
+    """
+    gl.glEnable(gl.GL_BLEND)
+    gl.glBlendEquation(mode)
+    gl.glBlendFunc(source, destination)
+
+    yield
+
+    gl.glDisable(gl.GL_BLEND)
+
