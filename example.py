@@ -96,7 +96,7 @@ class GLAPP(object):
         status = gl.glCheckFramebufferStatus(gl.GL_FRAMEBUFFER)
 
         if status != gl.GL_FRAMEBUFFER_COMPLETE:
-            print "framebuffer status faile"
+            print "framebuffer status failed"
             exit()
         else:
             print "framebuffer status", status

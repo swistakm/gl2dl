@@ -105,7 +105,6 @@ class ShadowMap(object):
             gl.glBindBuffer(gl.GL_ARRAY_BUFFER, self.VBO)
             gl.glVertexAttribPointer(0, 2, gl.GL_FLOAT, gl.GL_FALSE, 0, None)
 
-            # print self.position
             self._shader.bind()
             gl.glDrawArrays(gl.GL_TRIANGLES, 0, len(self._data))
 

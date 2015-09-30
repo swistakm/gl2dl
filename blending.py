@@ -48,10 +48,8 @@ def blending_rgba(
     :param alpha_destination:
     :param rgb_mode:
     :param alpha_mode:
-    :return:
-    """
 
-    print rgb_source, rgb_destination
+    """
     gl.glEnable(gl.GL_BLEND)
     gl.glBlendEquationSeparate(rgb_mode, alpha_mode)
     gl.glBlendFuncSeparate(
@@ -74,7 +72,7 @@ def blending(
     :param source:
     :param destination:
     :param mode:
-    :return:
+
     """
     gl.glEnable(gl.GL_BLEND)
     gl.glBlendEquation(mode)
