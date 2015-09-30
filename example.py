@@ -11,18 +11,27 @@ from lights import Glight
 # Vertex shader
 VS = """
 #version 330 core
-uniform float blue_level;
-
 layout(location = 0) in vec2 position;
+
+uniform vec2 light_position;
+uniform vec3 wall_color;
+
 out vec4 vertex_color;
 
 void main()
 {
-
     gl_Position = vec4(position.xy, 0, 1);
 
-    vertex_color.rg = (position.xy + 1) / 2.;
-    vertex_color.b = blue_level;
+    float distance = distance(light_position, position);
+    float attenuation = 1 / (distance * 2);
+
+    vertex_color = vec4(
+        attenuation,
+        attenuation,
+        attenuation,
+        wall_color.r
+    );
+
 }
 """
 
@@ -52,7 +61,7 @@ class GLAPP(object):
         glut.glutCreateWindow('Hello world!')
         glut.glutReshapeWindow(self.width, self.height)
 
-        self.shader_program = ShaderProgram(VS, FS)
+        self.shader = ShaderProgram(VS, FS)
         self.data = data
 
         glut.glutReshapeFunc(self.reshape)
@@ -86,6 +95,7 @@ class GLAPP(object):
         gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_MIN_FILTER, gl.GL_NEAREST)
         gl.glBindTexture(gl.GL_TEXTURE_2D, 0)
 
+        # TODO: implement some kind of FBO object to simplify this
         # Set "renderedTexture" as our colour attachement #0
         self.FBO = gl.glGenFramebuffers(1)
         gl.glBindFramebuffer(gl.GL_FRAMEBUFFER, self.FBO)
@@ -110,14 +120,19 @@ class GLAPP(object):
         self.light.position = x, self.height - y
         self.light.radius = 150
 
+        self.shader.bind()
+        self.shader['light_position'] = (
+            float(x - self.width/2) / self.width,
+            float(self.height/2 - y) / self.height,
+        )
+
     def timer(self, fps):
         glut.glutTimerFunc(1000/fps, self.timer, fps)
         glut.glutPostRedisplay()
 
     def loop(self):
-        self.shader_program.bind()
-        self.shader_program['blue_level'] = 0.9
-
+        self.shader.bind()
+        self.shader['wall_color'] = .8, .8, .8
         glut.glutMainLoop()
 
     def display(self):
@@ -126,6 +141,8 @@ class GLAPP(object):
         gl.glClear(gl.GL_COLOR_BUFFER_BIT)
 
         try:
+            # TODO: implement rendering merged lights to framebuffer and
+            #       blending them as texture (maybe LightingScene?)
             # gl.glBindFramebuffer(gl.GL_FRAMEBUFFER, self.FBO)
             gl.glClearColor(0, 0, 0, 0)
             gl.glClear(gl.GL_COLOR_BUFFER_BIT)
@@ -138,7 +155,7 @@ class GLAPP(object):
             gl.glBindBuffer(gl.GL_ARRAY_BUFFER, self.VBO)
             gl.glVertexAttribPointer(0, 2, gl.GL_FLOAT, gl.GL_FALSE, 0, None)
 
-            self.shader_program.bind()
+            self.shader.bind()
             gl.glDrawArrays(gl.GL_TRIANGLES, 0, len(self.data))
 
         except Exception as err:

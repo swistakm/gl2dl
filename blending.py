@@ -42,6 +42,8 @@ def blending_rgba(
         alpha_mode=Mode.ADD,
 ):
     """ **Important:** does not support nesting yet
+
+    TODO: support nesting by remembering the state of GL_BLEND
     :param rgb_source:
     :param rgb_destination:
     :param alpha_source:
@@ -69,6 +71,8 @@ def blending(
         mode=Mode.ADD,
 ):
     """ **Important:** does not support nesting yet
+
+    TODO: support nesting by remembering the state of GL_BLEND
     :param source:
     :param destination:
     :param mode:

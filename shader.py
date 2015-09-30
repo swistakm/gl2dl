@@ -119,6 +119,14 @@ class ShaderProgram(object):
     def __init__(
         self, vertex_code, fragment_code, geometry_code=None
     ):
+        """
+        TODO: way to ensure (at least with __debug__) that shader is bound when
+            trying to set uniform
+        :param vertex_code:
+        :param fragment_code:
+        :param geometry_code:
+        :return:
+        """
         self.vertex = self._create_shader(vertex_code, self.VERTEX)
         self.fragment = self._create_shader(fragment_code, self.FRAGMENT)
 

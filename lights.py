@@ -79,6 +79,15 @@ class ShadowMap(object):
     """
 
     def __init__(self, occluders):
+        """
+        TODO: allow passing some kind of shared buffer objects to reduce amount
+            of buffers since we will have probably more lights and also take
+            care of releasing the VBO, VAO
+        TODO: customizable shadow map (length, color, etc)
+        :param occluders:
+        :return:
+        """
+
         self._data = occluders
         self._shader = ShaderProgram(
             self.vertex_code,
@@ -160,6 +169,8 @@ class Glight(object):
 
     def __init__(self, color, position, occluders):
         """
+        TODO: world coordinates!
+
         :param color: light color as 3-element iterable
         :param position: position of light in world-space as 2-element iterable
         :param occluders: iterable for occluding traingles
