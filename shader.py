@@ -2,6 +2,7 @@
 from functools import wraps
 
 import OpenGL.GL as gl
+import re
 
 
 def _(fun):
@@ -17,7 +18,32 @@ def _(fun):
 
 
 class ShaderCompilationError(RuntimeError):
-    """Raised when GLSL shader compilation error occurs"""
+    """Raised when GLSL _shader compilation error occurs"""
+
+    SHADER_ERR_RE = re.compile(
+        r'ERROR: (?P<char_num>\d+):(?P<line_num>\d+)'
+    )
+
+    def __init__(self, gl_msg, code):
+        match = self.SHADER_ERR_RE.match(gl_msg)
+
+        # import ipdb; ipdb.set_trace()
+        if match:
+            char_num, line_num = (int(x) for x in match.groups())
+
+            msg = "\n".join((
+                gl_msg,
+                self._get_code_excerpt(code, line_num-1, char_num, '>>> ')
+            ))
+        else:
+            msg = gl_msg
+
+        super(ShaderCompilationError, self).__init__(msg)
+
+    @staticmethod
+    def _get_code_excerpt(code, line_num, char_num, padding):
+        line = code.split('\n')[line_num]
+        return padding + line + '\n' + padding + ' ' * char_num + '^' + '\n'
 
 
 def unpack_ctypes(value):
@@ -153,7 +179,7 @@ class ShaderProgram(object):
         gl.glCompileShader(shader)
 
         if not gl.glGetShaderiv(shader, gl.GL_COMPILE_STATUS):
-            raise ShaderCompilationError(gl.glGetShaderInfoLog(shader))
+            raise ShaderCompilationError(gl.glGetShaderInfoLog(shader), code)
 
         return shader
 
