@@ -27,7 +27,6 @@ class ShaderCompilationError(RuntimeError):
     def __init__(self, gl_msg, code):
         match = self.SHADER_ERR_RE.match(gl_msg)
 
-        # import ipdb; ipdb.set_trace()
         if match:
             char_num, line_num = (int(x) for x in match.groups())
 
