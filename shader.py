@@ -32,7 +32,9 @@ class ShaderCompilationError(RuntimeError):
 
             msg = "\n".join((
                 gl_msg,
-                self._get_code_excerpt(code, line_num-1, char_num, '>>> ')
+                '---------',
+                self._get_code_excerpt(code, line_num-1, char_num, '>>> '),
+                '---------',
             ))
         else:
             msg = gl_msg
@@ -41,9 +43,20 @@ class ShaderCompilationError(RuntimeError):
 
     @staticmethod
     def _get_code_excerpt(code, line_num, char_num, padding):
-        line = code.split('\n')[line_num]
-        return padding + line + '\n' + padding + ' ' * char_num + '^' + '\n'
+        code_lines = code.split('\n')
 
+        excerpt_lines = [
+            " " * len(padding) + line for line in
+            code_lines[max(0, line_num-2):line_num]
+        ]
+
+        line = code_lines[line_num]
+        excerpt_lines.append(padding + line)
+        if char_num:
+            excerpt_lines.append(' ' * char_num + '^')
+
+
+        return '\n'.join(excerpt_lines)
 
 def unpack_ctypes(value):
     """ Convert ctypes arrays to normal python list if value is an ctypes
