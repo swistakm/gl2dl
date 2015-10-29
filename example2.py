@@ -91,17 +91,18 @@ class GLAPP(object):
         image_bytes = self.image.tobytes("raw", "RGBX", 0, -1)
         gl.glTexImage2D(gl.GL_TEXTURE_2D, 0, 3, ix, iy, 0, gl.GL_RGBA, gl.GL_UNSIGNED_BYTE, image_bytes)
 
-        # gl.glTexParameter(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_MAG_FILTER, gl.GL_LINEAR)
-        # gl.glTexParameter(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_MIN_FILTER, gl.GL_LINEAR)
+        gl.glTexParameter(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_MAG_FILTER, gl.GL_NEAREST)
+        gl.glTexParameter(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_MIN_FILTER, gl.GL_NEAREST)
 
         self.uv_data = np.array([
-            [0.5, .1],
-            [.1, 0.1],
-            [.2, .9],
+            [0, 0],
+            [0, 1],
+            [1, 1],
 
-            [0.5, .1],
-            [.1, 0.1],
-            [.2, .9],
+            [1, 0],
+            [1, 1],
+            [0, 0],
+
         ], dtype=np.float32)
 
         self.UVB = gl.glGenBuffers(1)
@@ -125,7 +126,6 @@ class GLAPP(object):
     def display(self):
         # clear the buffer
         self.shader.bind()
-        self.shader['texture_sampler'] = self.texture
 
         gl.glClearColor(0, 0, 0, 0)
         gl.glClear(gl.GL_COLOR_BUFFER_BIT)
@@ -142,6 +142,11 @@ class GLAPP(object):
             gl.glVertexAttribPointer(1, 2, gl.GL_FLOAT, gl.GL_FALSE, 0, None)
 
             gl.glDrawArrays(gl.GL_TRIANGLES, 0, len(self.data))
+
+            gl.glActiveTexture(gl.GL_TEXTURE0)
+            gl.glBindTexture(gl.GL_TEXTURE_2D, self.texture)
+            # note: use texture numbers
+            self.shader['texture_sampler'] = 0
 
         except Exception as err:
             print err
