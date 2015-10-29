@@ -89,7 +89,8 @@ class GLAPP(object):
         ix = self.image.size[0]
         iy = self.image.size[1]
         image_bytes = self.image.tobytes("raw", "RGBX", 0, -1)
-        gl.glTexImage2D(gl.GL_TEXTURE_2D, 0, 3, ix, iy, 0, gl.GL_RGBA, gl.GL_UNSIGNED_BYTE, image_bytes)
+
+        gl.glTexImage2D(gl.GL_TEXTURE_2D, 0, gl.GL_RGB, ix, iy, 0, gl.GL_RGBA, gl.GL_UNSIGNED_BYTE, image_bytes)
 
         gl.glTexParameter(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_MAG_FILTER, gl.GL_NEAREST)
         gl.glTexParameter(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_MIN_FILTER, gl.GL_NEAREST)
