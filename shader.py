@@ -20,29 +20,31 @@ def _(fun):
 class ShaderCompilationError(RuntimeError):
     """Raised when GLSL _shader compilation error occurs"""
 
-    SHADER_ERR_RE = re.compile(
-        r'ERROR: (?P<char_num>\d+):(?P<line_num>\d+)'
-    )
+    SHADER_ERR_RES = [
+        re.compile(r'ERROR: (?P<file_num>\d+):(?P<line_num>\d+)'),
+        re.compile(r'(?P<file_num>\d+)\((?P<line_num>\d+)\) : error'),
+    ]
 
     def __init__(self, gl_msg, code):
-        match = self.SHADER_ERR_RE.match(gl_msg)
+        for re_ in self.SHADER_ERR_RES:
+            match = re_.match(gl_msg)
 
-        if match:
-            char_num, line_num = (int(x) for x in match.groups())
-
-            msg = "\n".join((
-                gl_msg,
-                '---------',
-                self._get_code_excerpt(code, line_num-1, char_num, '>>> '),
-                '---------',
-            ))
+            if match:
+                file_num, line_num = (int(x) for x in match.groups())
+                msg = "\n".join((
+                    gl_msg,
+                    '---------',
+                    self._get_code_excerpt(code, line_num-1, '>>> '),
+                    '---------',
+                ))
+                break
         else:
             msg = gl_msg
 
         super(ShaderCompilationError, self).__init__(msg)
 
     @staticmethod
-    def _get_code_excerpt(code, line_num, char_num, padding):
+    def _get_code_excerpt(code, line_num, padding):
         code_lines = code.split('\n')
 
         excerpt_lines = [
@@ -52,9 +54,6 @@ class ShaderCompilationError(RuntimeError):
 
         line = code_lines[line_num]
         excerpt_lines.append(padding + line)
-        if char_num:
-            excerpt_lines.append(' ' * char_num + '^')
-
 
         return '\n'.join(excerpt_lines)
 
