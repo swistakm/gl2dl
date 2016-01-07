@@ -117,14 +117,14 @@ class GLAPP(object):
 
     def on_mouse_move(self, x, y):
         self.light.color = 1, 0, 1
-        self.light.position = x, self.height - y
-        self.light.radius = 150
-
-        self.shader.bind()
-        self.shader['light_position'] = (
+        self.light.position = (
             float(x - self.width/2) / self.width,
             float(self.height/2 - y) / self.height,
         )
+        self.light.radius = 0.1
+
+        self.shader.bind()
+        self.shader['light_position'] = self.light.position
 
     def timer(self, fps):
         glut.glutTimerFunc(1000/fps, self.timer, fps)

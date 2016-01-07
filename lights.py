@@ -38,9 +38,7 @@ class ShadowMap(object):
 
     void main() {
         int k;
-        vec2 pos;
-        pos.x = (light_position.x-256) / 256;
-        pos.y = (light_position.y-256) / 256;
+        vec2 pos = light_position.xy * 2;
 
         for (int i=0; i<3; i++) {
             // todo: we may be able to reduce number or edges processed
@@ -138,10 +136,17 @@ class Glight(object):
 
         layout(location = 0) in vec2 position;
 
+        out vec2 pos;
+
         void main()
         {
             // passthrough vertex shader
             gl_Position = vec4(position, 0, 1);
+
+            // will be used to determine distance from light instead
+            // of using gl_FragColor in order to ensure same coordinates
+            // space
+            pos = position;
         }
     """
 
@@ -151,12 +156,13 @@ class Glight(object):
         uniform lowp vec3 light_color;
         uniform float radius;
 
+        in vec2 pos;
         out lowp vec4 out_color;
 
         void main()
         {
-            float distance = length(light_position - gl_FragCoord.xy);
-            float attenuation = radius / pow(distance, 1.2);
+            float distance = length(light_position - pos / 2);
+            float attenuation = radius / pow(distance, 0.9);
 
             out_color = vec4(
                 attenuation,

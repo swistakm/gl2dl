@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 import sys
+import random
+
 import OpenGL.GL as gl
 import OpenGL.GLUT as glut
 
@@ -117,18 +119,23 @@ class GLAPP(object):
 
     def on_mouse_move(self, x, y):
         self.light.color = 1, 0, 1
-        self.light.position = x, self.height - y
-        self.light.radius = 150
+        # self.light.position = x, self.height - y
 
-        self.shader.bind()
-        self.shader['light_position'] = (
+        self.light.position = (
             float(x - self.width/2) / self.width,
             float(self.height/2 - y) / self.height,
         )
+        self.light.radius = 0.1
+
+        self.shader.bind()
+        self.shader['light_position'] = self.light.position
 
     def timer(self, fps):
         glut.glutTimerFunc(1000/fps, self.timer, fps)
         glut.glutPostRedisplay()
+
+        randsign = lambda: [1, -1][random.randint(0, 1)]
+        self.light.radius += random.random() / 400. * randsign()
 
     def loop(self):
         self.shader.bind()
