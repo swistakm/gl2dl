@@ -4,6 +4,7 @@ import OpenGL.GL as gl
 import OpenGL.GLUT as glut
 
 import numpy as np
+from app import App
 
 from shaders import ShaderProgram
 from lights import GLight
@@ -52,28 +53,10 @@ void main()
 """
 
 
-class GLAPP(object):
-    def __init__(self, data):
-        self.width = 512
-        self.height = 512
-        glut.glutInit()
-        glut.glutInitDisplayMode(
-            # note: glut.GLUT_3_2_CORE_PROFILE is for Mac OS X
-            glut.GLUT_DOUBLE | glut.GLUT_RGBA | glut.GLUT_3_2_CORE_PROFILE
-        )
-        glut.glutCreateWindow('Hello world!')
-        glut.glutReshapeWindow(self.width, self.height)
-
+class GLAPP(App):
+    def init(self, data=None):
         self.shader = ShaderProgram(VS, FS)
         self.data = data
-
-        glut.glutReshapeFunc(self.reshape)
-        glut.glutKeyboardFunc(self.keyboard)
-        glut.glutDisplayFunc(self.display)
-
-        glut.glutTimerFunc(1000/60, self.timer, 60)
-        glut.glutMotionFunc(self.on_mouse_move)
-        glut.glutPassiveMotionFunc(self.on_mouse_move)
 
         self.VAO = gl.glGenVertexArrays(1)
         gl.glBindVertexArray(self.VAO)
@@ -134,9 +117,10 @@ class GLAPP(object):
         glut.glutPostRedisplay()
 
     def loop(self):
-        self.shader.bind()
-        self.shader['wall_color'] = .8, .8, .8
-        glut.glutMainLoop()
+        with self.shader as uniforms:
+            uniforms['wall_color'] = .8, .8, .8
+
+        super(GLAPP, self).loop()
 
     def display(self):
         # clear the buffer
@@ -174,11 +158,6 @@ class GLAPP(object):
 
             glut.glutSwapBuffers()
 
-    def reshape(self, width, height):
-        gl.glViewport(0, 0, width, height)
-        self.width = width
-        self.height = height
-
     @staticmethod
     def keyboard(key, *args):
         if key == '\033':
@@ -187,10 +166,6 @@ class GLAPP(object):
 
 if __name__ == '__main__':
     data = np.array([], dtype=np.float32)
-
-    from itertools import cycle
-
-    axis = cycle([0, 1,  1, 0])
 
     magic_number = 4
 
@@ -209,4 +184,4 @@ if __name__ == '__main__':
             hole += i/(magic_number * 1.2), w/(magic_number * 1.2)
             data = np.append(data, hole)
 
-    GLAPP(data).loop()
+    GLAPP(data=data).loop()

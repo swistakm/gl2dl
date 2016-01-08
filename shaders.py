@@ -233,6 +233,7 @@ class ShaderProgram(object):
     # context manager protocol
     def __enter__(self):
         self.bind()
+        return self
 
     # context manager protocol
     def __exit__(self, exc_type, exc_val, exc_tb):
