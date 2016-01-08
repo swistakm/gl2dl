@@ -15,38 +15,41 @@ VS = """
 #version 330 core
 layout(location = 0) in vec2 position;
 
-uniform vec2 light_position;
 uniform vec3 wall_color;
 
 out vec4 vertex_color;
+out vec2 vertex_position;
 
 void main()
 {
     gl_Position = vec4(position.xy, 0, 1);
 
-    float distance = distance(light_position, position);
-    float attenuation = 1 / (distance * 2);
-
-    vertex_color = vec4(
-        attenuation,
-        attenuation,
-        attenuation,
-        wall_color.r
-    );
-
+    vertex_position = position;
+    vertex_color = vec4(wall_color, 1);
 }
 """
 
 # Fragment shader
 FS = """
 #version 330 core
+uniform vec2 light_position;
 
 out lowp vec4 out_color;
+
+in vec2 vertex_position;
 in vec4 vertex_color;
 
 void main()
 {
-    out_color = vertex_color;
+    float distance = distance(light_position, vertex_position);
+    float attenuation = 1 / pow(distance, 5);
+
+    out_color = vec4(
+        attenuation,
+        attenuation,
+        attenuation,
+        1
+    ) * vertex_color;
 }
 """
 
