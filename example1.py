@@ -79,16 +79,16 @@ class GLAPP(App):
         )
         self.light.radius = 0.1
 
-        self.shader.bind()
-        self.shader['light_position'] = self.light.position
+        with self.shader as active:
+            active['light_position'] = self.light.position
 
     def timer(self, fps):
         randsign = lambda: [1, -1][random.randint(0, 1)]
         self.light.radius += random.random() / 400. * randsign()
 
     def loop(self):
-        with self.shader as uniforms:
-            uniforms['wall_color'] = .8, .8, .8
+        with self.shader as active:
+            active['wall_color'] = .8, .8, .8
 
         super(GLAPP, self).loop()
 
@@ -112,8 +112,8 @@ class GLAPP(App):
             gl.glBindBuffer(gl.GL_ARRAY_BUFFER, self.VBO)
             gl.glVertexAttribPointer(0, 2, gl.GL_FLOAT, gl.GL_FALSE, 0, None)
 
-            self.shader.bind()
-            gl.glDrawArrays(gl.GL_TRIANGLES, 0, len(self.data))
+            with self.shader:
+                gl.glDrawArrays(gl.GL_TRIANGLES, 0, len(self.data))
 
         except Exception as err:
             print err
@@ -121,7 +121,6 @@ class GLAPP(App):
 
         finally:
             gl.glBindVertexArray(0)
-            gl.glUseProgram(0)
 
             gl.glBindBuffer(gl.GL_ARRAY_BUFFER, 0)
             gl.glBindFramebuffer(gl.GL_FRAMEBUFFER, 0)
