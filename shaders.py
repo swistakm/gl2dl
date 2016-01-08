@@ -230,4 +230,10 @@ class ShaderProgram(object):
     def unbind():
         gl.glUseProgram(0)
 
+    # context manager protocol
+    def __enter__(self):
+        self.bind()
 
+    # context manager protocol
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.unbind()

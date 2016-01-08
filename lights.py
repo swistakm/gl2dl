@@ -255,18 +255,17 @@ class GLight(object):
 
     def _draw_light(self):
         try:
-            self._shader.bind()
+            with self._shader:
+                self._shader.bind()
 
-            gl.glBindVertexArray(self.VAO)
-            gl.glBindBuffer(gl.GL_ARRAY_BUFFER, self.VBO)
-            gl.glVertexAttribPointer(0, 2, gl.GL_FLOAT, gl.GL_FALSE, 0, None)
+                gl.glBindVertexArray(self.VAO)
+                gl.glBindBuffer(gl.GL_ARRAY_BUFFER, self.VBO)
+                gl.glVertexAttribPointer(0, 2, gl.GL_FLOAT, gl.GL_FALSE, 0, None)
 
-            gl.glDrawArrays(gl.GL_TRIANGLE_STRIP, 0, len(self.vertices))
+                gl.glDrawArrays(gl.GL_TRIANGLE_STRIP, 0, len(self.vertices))
 
         finally:
-            self._shader.unbind()
             gl.glBindVertexArray(0)
-            gl.glUseProgram(0)
             gl.glBindBuffer(gl.GL_ARRAY_BUFFER, 0)
 
     def draw(self):
