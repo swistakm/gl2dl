@@ -7,8 +7,8 @@ import OpenGL.GLUT as glut
 
 import numpy as np
 
-from shader import ShaderProgram
-from lights import Glight
+from shaders import ShaderProgram
+from lights import GLight
 
 # Vertex shader
 VS = """
@@ -115,7 +115,7 @@ class GLAPP(object):
         gl.glBindFramebuffer(gl.GL_FRAMEBUFFER, 0)
         # -- end fbo --
 
-        self.light = Glight((1, .5, .5), (0, 0, 0), data)
+        self.light = GLight((1, .5, .5), (0, 0, 0), data)
 
     def on_mouse_move(self, x, y):
         self.light.color = 1, 0, 1

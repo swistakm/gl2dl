@@ -7,7 +7,7 @@ import OpenGL.GLUT as glut
 
 from PIL import Image
 import numpy as np
-from shader import ShaderProgram
+from shaders import ShaderProgram
 
 
 VS = """

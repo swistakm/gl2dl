@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import OpenGL.GL as gl
 
-from shader import ShaderProgram
+from shaders import ShaderProgram
 import blending
 
 import numpy as np
@@ -130,7 +130,7 @@ class ShadowMap(object):
         self._shader['light_position'] = value
 
 
-class Glight(object):
+class GLight(object):
     vertex_code = """
         #version 330 core
 
