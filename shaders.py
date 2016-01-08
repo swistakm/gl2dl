@@ -57,6 +57,7 @@ class ShaderCompilationError(RuntimeError):
 
         return '\n'.join(excerpt_lines)
 
+
 def unpack_ctypes(value):
     """ Convert ctypes arrays to normal python list if value is an ctypes
     array
