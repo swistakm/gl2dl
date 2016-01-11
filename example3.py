@@ -46,4 +46,4 @@ if __name__ == '__main__':
         [-1, -1],
     ], dtype=np.float32) / 1.5
 
-    GLAPP(data).loop()
+    GLAPP(data=data).loop()
