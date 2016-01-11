@@ -76,8 +76,8 @@ class GLAPP(App):
         )
         self.light.radius = 0.1
 
-        self.shader.bind()
-        self.shader['light_position'] = self.light.position
+        with self.shader as active:
+            active['light_position'] = self.light.position
 
     def timer(self, fps):
         glut.glutTimerFunc(1000/fps, self.timer, fps)
@@ -106,8 +106,8 @@ class GLAPP(App):
             gl.glBindBuffer(gl.GL_ARRAY_BUFFER, self.VBO)
             gl.glVertexAttribPointer(0, 2, gl.GL_FLOAT, gl.GL_FALSE, 0, None)
 
-            self.shader.bind()
-            gl.glDrawArrays(gl.GL_TRIANGLES, 0, len(self.data))
+            with self.shader:
+                gl.glDrawArrays(gl.GL_TRIANGLES, 0, len(self.data))
 
         except Exception as err:
             print err
@@ -131,7 +131,7 @@ class GLAPP(App):
 if __name__ == '__main__':
     data = np.array([], dtype=np.float32)
 
-    magic_number = 4
+    magic_number = 10
 
     for w in xrange(-magic_number, magic_number):
         for i in xrange(-magic_number, magic_number):
