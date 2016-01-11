@@ -56,11 +56,15 @@ class Sprite(object):
         layout(location = 0) in vec2 vertexPosition;
         layout(location = 1) in vec2 vertexUV;
 
+        uniform float scale;
+        uniform vec4 model_view_projection;
+
         // Output data ; will be interpolated for each fragment.
         out vec2 UV;
 
         void main(){
-            gl_Position =  vec4(vertexPosition, 0, 1);
+            gl_Position =  model_view_projection * vec4(vertexPosition, 0, 1);
+    //        gl_Position = vec4(vertexPosition, 0, 1);
             // UV of the vertex. No special space for this one.
             UV = vertexUV;
         }
@@ -86,12 +90,15 @@ class Sprite(object):
         }
     """
 
-    def __init__(self, file_name=None, texture=None):
+    def __init__(self, file_name=None, texture=None, position=(0, 0), scale=1):
         """
         :param texture: Image object
         :param file_name: file_name object
         :return:
         """
+        self.position = position
+        self.scale = scale
+
         if texture and file_name:
             raise ValueError(
                 "Sprite can be instantiated by either 'texture' or "
@@ -106,22 +113,23 @@ class Sprite(object):
         self._shader = ShaderProgram(self.vertex_code, self.fragment_code)
 
         self.data = np.array([
-            [-1, -1],
-            [-1, 1],
-            [1, 1],
-
-            [1, -1],
-            [1, 1],
-            [-1, -1],
-        ], dtype=np.float32) / 1.5
+            [-100, -100], [-100, 100], [100, 100],
+            [100, -100], [100, 100], [-100, -100],
+        ], dtype=np.float32)
 
         self.VBO = gl.glGenBuffers(1)
         gl.glBindBuffer(gl.GL_ARRAY_BUFFER, self.VBO)
         gl.glBufferData(gl.GL_ARRAY_BUFFER, self.data.nbytes, self.data, gl.GL_STATIC_DRAW)  # noqa
         gl.glEnableVertexAttribArray(0)
 
-    def draw(self):
-        with self._shader:
+    def draw(self, x=0, y=0, scale=1.0):
+        with self._shader as active:
+            active['model_view_projection'] = [
+                [2./256., 0, 0, -x],
+                [0, 2./256., 0, -y],
+                [0, 0, -2., 0],
+                [0, 0, 0, 1],
+            ]
 
             gl.glBindVertexArray(self._texture.VAO)
             gl.glBindBuffer(gl.GL_ARRAY_BUFFER, self.VBO)
