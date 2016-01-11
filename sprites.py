@@ -1,10 +1,31 @@
 # -*- coding: utf-8 -*-
 import OpenGL.GL as gl
+import OpenGL.GLUT as glut
 
 from PIL import Image
 import numpy as np
 
 from shaders import ShaderProgram
+
+
+def ortho(width, height, x, y,):
+    """
+    Return orthographic projection matrix
+
+    :param width: viewport width
+    :param height: viewport heigth
+    :param x: x position of object
+    :param y: y position of object
+    :return: 4x4 np.ndarray
+    """
+
+    matrix = np.array([
+        [2./width, 0,         0,  -(2. * -x + width)/width],
+        [0,        2./height, 0,  -(2. * -y + height)/height],
+        [0,        0,         -2, -1],
+        [0,        0,         0,  1.],
+    ], dtype=np.float32)
+    return matrix
 
 
 class Texture(object):
@@ -47,6 +68,14 @@ class Texture(object):
         # note: location of buffer?
         gl.glEnableVertexAttribArray(1)
 
+    @property
+    def width(self):
+        return self._image.size[0]
+
+    @property
+    def height(self):
+        return self._image.size[1]
+
 
 class Sprite(object):
     vertex_code = """
@@ -57,14 +86,14 @@ class Sprite(object):
         layout(location = 1) in vec2 vertexUV;
 
         uniform float scale;
-        uniform vec4 model_view_projection;
+        uniform mat4 model_view_projection;
 
         // Output data ; will be interpolated for each fragment.
         out vec2 UV;
 
         void main(){
-            gl_Position =  model_view_projection * vec4(vertexPosition, 0, 1);
-    //        gl_Position = vec4(vertexPosition, 0, 1);
+            gl_Position =  model_view_projection * vec4(vertexPosition, 0, 1/scale);
+
             // UV of the vertex. No special space for this one.
             UV = vertexUV;
         }
@@ -90,15 +119,13 @@ class Sprite(object):
         }
     """
 
-    def __init__(self, file_name=None, texture=None, position=(0, 0), scale=1):
+    def __init__(self, file_name=None, texture=None, pivot=(0, 0)):
         """
         :param texture: Image object
         :param file_name: file_name object
+        :param pivot: sprite pivot (x, y) in texture space for scaling and rotation
         :return:
         """
-        self.position = position
-        self.scale = scale
-
         if texture and file_name:
             raise ValueError(
                 "Sprite can be instantiated by either 'texture' or "
@@ -113,9 +140,15 @@ class Sprite(object):
         self._shader = ShaderProgram(self.vertex_code, self.fragment_code)
 
         self.data = np.array([
-            [-100, -100], [-100, 100], [100, 100],
-            [100, -100], [100, 100], [-100, -100],
-        ], dtype=np.float32)
+            # first triangle of sprite rect
+            [0,                   0],
+            [0,                   self._texture.height],
+            [self._texture.width, self._texture.height],
+            # second triangle of sprite rect
+            [self._texture.width, 0],
+            [self._texture.width, self._texture.height],
+            [0,                   0],
+        ], dtype=np.float32) - np.array(pivot, dtype=np.float32)
 
         self.VBO = gl.glGenBuffers(1)
         gl.glBindBuffer(gl.GL_ARRAY_BUFFER, self.VBO)
@@ -124,12 +157,12 @@ class Sprite(object):
 
     def draw(self, x=0, y=0, scale=1.0):
         with self._shader as active:
-            active['model_view_projection'] = [
-                [2./256., 0, 0, -x],
-                [0, 2./256., 0, -y],
-                [0, 0, -2., 0],
-                [0, 0, 0, 1],
-            ]
+            active['scale'] = scale
+            active['model_view_projection'] = ortho(
+                glut.glutGet(glut.GLUT_WINDOW_WIDTH),
+                glut.glutGet(glut.GLUT_WINDOW_HEIGHT),
+                x, y,
+            )
 
             gl.glBindVertexArray(self._texture.VAO)
             gl.glBindBuffer(gl.GL_ARRAY_BUFFER, self.VBO)

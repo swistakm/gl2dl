@@ -22,7 +22,11 @@ class GLAPP(App):
             gl.glClearColor(0, 0, 0, 0)
             gl.glClear(gl.GL_COLOR_BUFFER_BIT)
 
-            self.sprite.draw(scale=math.sin(time.time()))
+            self.sprite.draw(
+                x=math.sin(time.time()) * 256 - 256,
+                y=math.cos(time.time()) * 256 - 256,
+                scale=math.sin(time.time()*10)
+            )
 
         except Exception as err:
             print err
