@@ -14,7 +14,7 @@ from sprites import Sprite
 class GLAPP(App):
     def init(self, data=None):
         self.data = data
-        self.sprite = Sprite('marble.bmp')
+        self.sprite = Sprite('marble.bmp', pivot=(128, 128))
 
     def display(self):
         try:
@@ -23,9 +23,9 @@ class GLAPP(App):
             gl.glClear(gl.GL_COLOR_BUFFER_BIT)
 
             self.sprite.draw(
-                x=math.sin(time.time()) * 256 - 256,
-                y=math.cos(time.time()) * 256 - 256,
-                scale=math.sin(time.time()*10)
+                x=math.sin(time.time()) * 128 + 256,
+                y=math.cos(time.time()) * 128 + 256,
+                scale=math.sin(time.time() * 50) / 50 + .5
             )
 
         except Exception as err:
