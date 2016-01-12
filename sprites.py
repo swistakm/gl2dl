@@ -5,27 +5,8 @@ import OpenGL.GLUT as glut
 from PIL import Image
 import numpy as np
 
+from primitives import ortho, rect_triangles
 from shaders import ShaderProgram
-
-
-def ortho(width, height, x, y,):
-    """
-    Return orthographic projection matrix
-
-    :param width: viewport width
-    :param height: viewport heigth
-    :param x: x position of object
-    :param y: y position of object
-    :return: 4x4 np.ndarray
-    """
-
-    matrix = np.array([
-        [2./width, 0,         0,  -(2. * -x + width)/width],
-        [0,        2./height, 0,  -(2. * -y + height)/height],
-        [0,        0,         -2, -1],
-        [0,        0,         0,  1.],
-    ], dtype=np.float32)
-    return matrix
 
 
 class Texture(object):
@@ -50,16 +31,7 @@ class Texture(object):
         gl.glTexParameter(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_MAG_FILTER, gl.GL_NEAREST)  # noqa
         gl.glTexParameter(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_MIN_FILTER, gl.GL_NEAREST)  # noqa
 
-        self.uv_data = np.array([
-            [0, 0],
-            [0, 1],
-            [1, 1],
-
-            [1, 0],
-            [1, 1],
-            [0, 0],
-
-        ], dtype=np.float32)
+        self.uv_data = rect_triangles(0, 0, 1, 1)
 
         self.UVB = gl.glGenBuffers(1)
 
@@ -139,16 +111,9 @@ class Sprite(object):
 
         self._shader = ShaderProgram(self.vertex_code, self.fragment_code)
 
-        self.data = np.array([
-            # first triangle of sprite rect
-            [0,                   0],
-            [0,                   self._texture.height],
-            [self._texture.width, self._texture.height],
-            # second triangle of sprite rect
-            [self._texture.width, 0],
-            [self._texture.width, self._texture.height],
-            [0,                   0],
-        ], dtype=np.float32) - np.array(pivot, dtype=np.float32)
+        self.data = rect_triangles(
+            0, 0, self._texture.width, self._texture.height
+        ) - np.array(pivot, dtype=np.float32)
 
         self.VBO = gl.glGenBuffers(1)
         gl.glBindBuffer(gl.GL_ARRAY_BUFFER, self.VBO)

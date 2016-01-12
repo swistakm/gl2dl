@@ -31,9 +31,9 @@ class App(object):
 
         glut.glutReshapeFunc(self._reshape)
         glut.glutTimerFunc(1000/60, self._timer, fps)
+        glut.glutDisplayFunc(self._display)
 
         glut.glutKeyboardFunc(self.keyboard)
-        glut.glutDisplayFunc(self.display)
 
         glut.glutMotionFunc(self.on_mouse_move)
         glut.glutPassiveMotionFunc(self.on_mouse_move)
@@ -43,6 +43,18 @@ class App(object):
 
     def loop(self):
         glut.glutMainLoop()
+
+    def _display(self):
+        try:
+            self.display()
+        finally:
+            gl.glBindVertexArray(0)
+            gl.glUseProgram(0)
+
+            gl.glBindBuffer(gl.GL_ARRAY_BUFFER, 0)
+            gl.glBindFramebuffer(gl.GL_FRAMEBUFFER, 0)
+
+            glut.glutSwapBuffers()
 
     def display(self):
         """User defined diplay handler stub"""
@@ -71,3 +83,8 @@ class App(object):
 
     def on_mouse_move(self, x, y):
         """User-defined "on mouse move" handler stub"""
+
+    def clear(self, color=(0, 0, 0, 0)):
+        """Clear the windown buffer"""
+        gl.glClearColor(*color)
+        gl.glClear(gl.GL_COLOR_BUFFER_BIT)

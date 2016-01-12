@@ -1,8 +1,10 @@
 # -*- coding: utf-8 -*-
 import OpenGL.GL as gl
+import OpenGL.GLUT as glut
 
 from shaders import ShaderProgram
 import blending
+from primitives import ortho
 
 import numpy as np
 
@@ -12,15 +14,18 @@ class ShadowMap(object):
     #version 330 core
     layout(location = 0) in vec2 position;
 
+    uniform mat4 model_view_projection;
+
     void main()
     {
-        gl_Position = vec4(position.xy, 0, 1);
+        gl_Position = model_view_projection * vec4(position.xy, 0, 1);
     }
     """
 
     geometry_code = """
     #version 330 core
     uniform vec2 light_position;
+    uniform mat4 model_view_projection;
 
     layout(triangles) in;
     layout(triangle_strip, max_vertices = 24) out;
@@ -38,7 +43,6 @@ class ShadowMap(object):
 
     void main() {
         int k;
-        vec2 pos = light_position.xy * 2;
 
         for (int i=0; i<3; i++) {
             // todo: we may be able to reduce number or edges processed
@@ -50,13 +54,13 @@ class ShadowMap(object):
 
             // todo: customize extrapolate lengths
             // todo: option to select shadow form (extrapolate/mirror)
-            gl_Position.xy = extrapolate(pos, gl_in[i].gl_Position.xy, 1);
+            gl_Position.xy = extrapolate(light_position, gl_in[i].gl_Position.xy, 1);
             EmitVertex();
 
             gl_Position = gl_in[k].gl_Position;
             EmitVertex();
 
-            gl_Position.xy = extrapolate(pos, gl_in[k].gl_Position.xy, 1);
+            gl_Position.xy = extrapolate(light_position, gl_in[k].gl_Position.xy, 1);
             EmitVertex();
         }
     }
@@ -112,22 +116,35 @@ class ShadowMap(object):
             gl.glBindBuffer(gl.GL_ARRAY_BUFFER, self.VBO)
             gl.glVertexAttribPointer(0, 2, gl.GL_FLOAT, gl.GL_FALSE, 0, None)
 
-            self._shader.bind()
-            gl.glDrawArrays(gl.GL_TRIANGLES, 0, len(self._data))
+            with self._shader as active:
+                model_view_projection = ortho(
+                    glut.glutGet(glut.GLUT_WINDOW_WIDTH),
+                    glut.glutGet(glut.GLUT_WINDOW_HEIGHT),
+                )
+                active['model_view_projection'] = model_view_projection
+
+                # note: precalculate position here to avoid doing this for
+                #       every vertex
+                active['light_position'] = model_view_projection.dot(
+                    np.array([self.position[0], self.position[1], 0, 1])
+                )
+
+                gl.glDrawArrays(gl.GL_TRIANGLES, 0, len(self._data))
 
         finally:
-            self._shader.unbind()
             gl.glBindVertexArray(0)
             gl.glBindBuffer(gl.GL_ARRAY_BUFFER, 0)
 
     @property
     def position(self):
-        return self._shader['light_position']
+        return self._position
+        # return self._shader['light_position']
 
     @position.setter
     def position(self, value):
-        self._shader.bind()
-        self._shader['light_position'] = value
+        self._position = value
+        # self._shader.bind()
+        # self._shader['light_position'] = value
 
 
 class GLight(object):
@@ -136,17 +153,10 @@ class GLight(object):
 
         layout(location = 0) in vec2 position;
 
-        out vec2 pos;
-
         void main()
         {
             // passthrough vertex shader
             gl_Position = vec4(position, 0, 1);
-
-            // will be used to determine distance from light instead
-            // of using gl_FragColor in order to ensure same coordinates
-            // space
-            pos = position;
         }
     """
 
@@ -156,13 +166,14 @@ class GLight(object):
         uniform lowp vec3 light_color;
         uniform float radius;
 
-        in vec2 pos;
         out lowp vec4 out_color;
 
         void main()
         {
-            float distance = length(light_position - pos / 2);
-            float attenuation = radius / pow(distance, 0.9);
+            // note: origin of gl_FragCoord is the lower-left corner
+            //       and light_position is described in window space
+            float distance = length(light_position - gl_FragCoord.xy);
+            float attenuation = radius / pow(distance, 1.25);
 
             out_color = vec4(
                 attenuation,
@@ -220,8 +231,8 @@ class GLight(object):
 
     @position.setter
     def position(self, value):
-        self._shader.bind()
-        self._shader['light_position'] = value
+        with self._shader as active:
+            active['light_position'] = value
 
         self._shadows.position = value
 

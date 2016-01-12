@@ -9,6 +9,7 @@ from app import App
 
 from shaders import ShaderProgram
 from lights import GLight
+from primitives import rect_triangles, ortho
 
 # Vertex shader
 VS = """
@@ -16,13 +17,14 @@ VS = """
 layout(location = 0) in vec2 position;
 
 uniform vec3 wall_color;
+uniform mat4 model_view_projection;
 
 out vec4 vertex_color;
 out vec2 vertex_position;
 
 void main()
 {
-    gl_Position = vec4(position.xy, 0, 1);
+    gl_Position = model_view_projection * vec4(position.xy, 0, 1);
 
     vertex_position = position;
     vertex_color = vec4(wall_color, 1);
@@ -41,8 +43,8 @@ in vec4 vertex_color;
 
 void main()
 {
-    float distance = distance(light_position, vertex_position);
-    float attenuation = 1 / pow(distance, 5);
+    float distance = length(light_position - gl_FragCoord.xy);
+    float attenuation = 300 / pow(distance, 1);
 
     out_color = vec4(
         attenuation,
@@ -67,24 +69,19 @@ class GLAPP(App):
         gl.glBufferData(gl.GL_ARRAY_BUFFER, data.nbytes, data, gl.GL_STATIC_DRAW)
         gl.glEnableVertexAttribArray(0)
 
-        self.light = GLight((1, .5, .5), (0, 0, 0), data)
+        self.light = GLight((1, .5, .5), (0, 0,), data)
 
     def on_mouse_move(self, x, y):
         self.light.color = 1, 0, 1
-        # self.light.position = x, self.height - y
-
-        self.light.position = (
-            float(x - self.width/2) / self.width,
-            float(self.height/2 - y) / self.height,
-        )
-        self.light.radius = 0.1
+        self.light.position = x, glut.glutGet(glut.GLUT_WINDOW_HEIGHT) - y
+        self.light.radius = 200
 
         with self.shader as active:
             active['light_position'] = self.light.position
 
     def timer(self, fps):
         randsign = lambda: [1, -1][random.randint(0, 1)]
-        self.light.radius += random.random() / 400. * randsign()
+        self.light.radius += random.random() * 2 * randsign()
 
     def loop(self):
         with self.shader as active:
@@ -93,18 +90,11 @@ class GLAPP(App):
         super(GLAPP, self).loop()
 
     def display(self):
-        # clear the buffer
-        gl.glClearColor(0, 0, 0, 0)
-        gl.glClear(gl.GL_COLOR_BUFFER_BIT)
-
         try:
             # TODO: implement rendering merged lights to framebuffer and
             #       blending them as texture (maybe LightingScene?)
             # gl.glBindFramebuffer(gl.GL_FRAMEBUFFER, self.FBO)
-            gl.glClearColor(0, 0, 0, 0)
-            gl.glClear(gl.GL_COLOR_BUFFER_BIT)
-
-            # draw lights
+            self.clear()
             self.light.draw()
 
             # draw occluders polygons
@@ -112,52 +102,23 @@ class GLAPP(App):
             gl.glBindBuffer(gl.GL_ARRAY_BUFFER, self.VBO)
             gl.glVertexAttribPointer(0, 2, gl.GL_FLOAT, gl.GL_FALSE, 0, None)
 
-            with self.shader:
+            with self.shader as active:
+                active['model_view_projection'] = ortho(
+                    glut.glutGet(glut.GLUT_WINDOW_WIDTH),
+                    glut.glutGet(glut.GLUT_WINDOW_HEIGHT),
+                )
                 gl.glDrawArrays(gl.GL_TRIANGLES, 0, len(self.data))
 
         except Exception as err:
             print err
             exit(1)
 
-        finally:
-            gl.glBindVertexArray(0)
-
-            gl.glBindBuffer(gl.GL_ARRAY_BUFFER, 0)
-            gl.glBindFramebuffer(gl.GL_FRAMEBUFFER, 0)
-
-            glut.glutSwapBuffers()
-
 
 if __name__ == '__main__':
-    data = np.array([
-        [-1, -1],
-        [-1, 1],
-        [1, 1],
+    data = np.array([], dtype=np.float32)
 
-        [1, -1],
-        [1, 1],
-        [-1, -1],
-
-        [-3, -3],
-        [-3, -2],
-        [-2, -2],
-
-        [-2, -3],
-        [-2, -2],
-        [-3, -3],
-
-        [3, 3],
-        [3, 2],
-        [2, 2],
-
-        [2, 3],
-        [2, 2],
-        [3, 3],
-
-        [-4, 3],
-        [-3, 5],
-        [-2, 2],
-
-    ], dtype=np.float32) / 7.
+    data = np.append(data, rect_triangles(50, 50, 100, 100))
+    data = np.append(data, rect_triangles(150, 50, 220, 200))
+    data = np.append(data, rect_triangles(20, 300, 100, 350))
 
     GLAPP(data=data).loop()

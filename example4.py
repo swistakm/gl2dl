@@ -1,56 +1,29 @@
 # -*- coding: utf-8 -*-
-import time
-import math
-
-import OpenGL.GL as gl
-import OpenGL.GLUT as glut
-
-import numpy as np
+from time import time
+from math import sin, cos
 
 from app import App
 from sprites import Sprite
 
 
 class GLAPP(App):
-    def init(self, data=None):
-        self.data = data
-        self.sprite = Sprite('marble.bmp', pivot=(128, 128))
+    def init(self):
+        self.sprite = Sprite('heart.jpg', pivot=(270, 160))
 
     def display(self):
         try:
-            # clear the buffer
-            gl.glClearColor(0, 0, 0, 0)
-            gl.glClear(gl.GL_COLOR_BUFFER_BIT)
+            self.clear()
 
             self.sprite.draw(
-                x=math.sin(time.time()) * 128 + 256,
-                y=math.cos(time.time()) * 128 + 256,
-                scale=math.sin(time.time() * 50) / 50 + .5
+                x=sin(time()) * 128 + 256,
+                y=cos(time()) * 128 + 256,
+                scale=sin(time() * 50) / 50 + .5
             )
 
         except Exception as err:
             print err
             exit(1)
 
-        finally:
-            gl.glBindVertexArray(0)
-            gl.glUseProgram(0)
-
-            gl.glBindBuffer(gl.GL_ARRAY_BUFFER, 0)
-            gl.glBindFramebuffer(gl.GL_FRAMEBUFFER, 0)
-
-            glut.glutSwapBuffers()
-
 
 if __name__ == '__main__':
-    data = np.array([
-        [-1, -1],
-        [-1, 1],
-        [1, 1],
-
-        [1, -1],
-        [1, 1],
-        [-1, -1],
-    ], dtype=np.float32) / 1.5
-
-    GLAPP(data=data).loop()
+    GLAPP().loop()
