@@ -18,7 +18,6 @@ if __name__ == '__main__':
                 i * size, w * size,
                 i * size + size, w * size + size)
 
-
             data = np.append(data, hole)
 
     GLAPP(data=data).loop()
