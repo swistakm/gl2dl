@@ -2,9 +2,9 @@
 import OpenGL.GL as gl
 import OpenGL.GLUT as glut
 
-from shaders import ShaderProgram
-import blending
-from primitives import ortho
+from . import blending
+from .shaders import ShaderProgram
+from .primitives import ortho
 
 import numpy as np
 

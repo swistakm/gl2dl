@@ -5,11 +5,11 @@ import OpenGL.GL as gl
 import OpenGL.GLUT as glut
 
 import numpy as np
-from app import App
 
-from shaders import ShaderProgram
-from lights import GLight
-from primitives import rect_triangles, ortho
+from gl2dl.app import App
+from gl2dl.shaders import ShaderProgram
+from gl2dl.lights import GLight
+from gl2dl.primitives import rect_triangles, ortho
 
 # Vertex shader
 VS = """

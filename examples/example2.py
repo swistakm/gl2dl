@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import numpy as np
-from primitives import rect_triangles
+
+from gl2dl.primitives import rect_triangles
 
 from example1 import GLAPP
 

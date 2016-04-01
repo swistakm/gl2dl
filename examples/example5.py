@@ -3,8 +3,8 @@
 from time import time
 from math import sin, cos
 
-from app import App
-from primitives import Rect
+from gl2dl.app import App
+from gl2dl.primitives import Rect
 
 
 class GLAPP(App):

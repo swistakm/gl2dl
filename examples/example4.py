@@ -2,13 +2,13 @@
 from time import time
 from math import sin, cos
 
-from app import App
-from sprites import Sprite
+from gl2dl.app import App
+from gl2dl.sprites import Sprite
 
 
 class GLAPP(App):
     def init(self):
-        self.sprite = Sprite('heart.jpg', pivot=(270, 160))
+        self.sprite = Sprite('assets/heart.jpg', pivot=(270, 160))
 
     def display(self):
         try:

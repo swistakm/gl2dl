@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 from functools import wraps
+import re
 
 import OpenGL.GL as gl
-import re
 
 
 def _(fun):

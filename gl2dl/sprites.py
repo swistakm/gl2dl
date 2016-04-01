@@ -5,8 +5,8 @@ import OpenGL.GLUT as glut
 from PIL import Image
 import numpy as np
 
-from primitives import ortho, rect_triangles
-from shaders import ShaderProgram
+from .primitives import ortho, rect_triangles
+from .shaders import ShaderProgram
 
 
 class Texture(object):

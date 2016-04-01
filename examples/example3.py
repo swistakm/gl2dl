@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
-from app import App
-from sprites import Sprite
+from gl2dl.app import App
+from gl2dl.sprites import Sprite
 
 
 class GLAPP(App):
     def init(self):
-        self.sprite = Sprite('marble.bmp', pivot=(128, 128))
+        self.sprite = Sprite('assets/marble.bmp', pivot=(128, 128))
 
     def display(self):
         try:
