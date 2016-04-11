@@ -28,7 +28,7 @@ class App(object):
         self.init(**kwargs)
 
         glut.glutReshapeFunc(self._reshape)
-        glut.glutTimerFunc(1000/60, self._timer, fps)
+        glut.glutTimerFunc(int(1000/60), self._timer, fps)
         glut.glutDisplayFunc(self._display)
 
         glut.glutKeyboardFunc(self.keyboard)
@@ -67,7 +67,7 @@ class App(object):
         """reshape handler stub"""
 
     def _timer(self, fps):
-        glut.glutTimerFunc(1000/fps, self._timer, fps)
+        glut.glutTimerFunc(int(1000/fps), self._timer, fps)
         self.timer(fps)
         glut.glutPostRedisplay()
 
@@ -76,8 +76,8 @@ class App(object):
 
     def keyboard(self, key, *args):
         """User-defined kearboard event handler stub"""
-        if key == '\033':
-            sys.exit()
+        if key == b'\033':
+            self.exit()
 
     def on_mouse_move(self, x, y):
         """User-defined "on mouse move" handler stub"""

@@ -110,7 +110,7 @@ class GLAPP(App):
                 gl.glDrawArrays(gl.GL_TRIANGLES, 0, len(self.data))
 
         except Exception as err:
-            print err
+            print(err)
             exit(1)
 
 

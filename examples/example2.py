@@ -12,8 +12,8 @@ if __name__ == '__main__':
     size = 10
     skip = 3
 
-    for w in xrange(1, number * skip, skip):
-        for i in xrange(1, number * skip, skip):
+    for w in range(1, number * skip, skip):
+        for i in range(1, number * skip, skip):
             hole = rect_triangles(
                 i * size, w * size,
                 i * size + size, w * size + size)

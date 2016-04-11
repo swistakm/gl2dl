@@ -4,7 +4,7 @@ import OpenGL.GLUT as glut
 
 import numpy as np
 
-from shaders import ShaderProgram
+from .shaders import ShaderProgram
 
 
 def rect_triangles(x1, y1, x2, y2):

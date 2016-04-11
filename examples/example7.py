@@ -48,7 +48,7 @@ class GLAPP(App):
             self.rect_batch.draw()
 
         except Exception as err:
-            print err
+            print(err)
             exit(1)
 
 if __name__ == '__main__':

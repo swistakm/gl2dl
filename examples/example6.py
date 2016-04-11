@@ -43,7 +43,7 @@ class GLAPP(App):
                 self.rect.draw(*position, color=(1, 1, 1))
 
         except Exception as err:
-            print err
+            print(err)
             exit(1)
 
 if __name__ == '__main__':

@@ -142,6 +142,8 @@ class ShaderProgram(object):
         self._uniforms = self._prepare_uniforms()
 
     def __setitem__(self, key, value):
+        # compat: py3 version requires bytes
+        key = key.encode('utf-8')
         if key in self._uniforms:
             size, gl_type = self._uniforms[key]
 
@@ -154,6 +156,8 @@ class ShaderProgram(object):
             raise KeyError("No active uniform of name: {}".format(key))
 
     def __getitem__(self, key):
+        # compat: py3 version requires bytes
+        key = key.encode('utf-8')
         if key in self._uniforms:
             size, gl_type = self._uniforms[key]
             setter, getter, GLType = self.TYPE_CONST_TO_SET_GET_TYPE[gl_type]
@@ -178,7 +182,7 @@ class ShaderProgram(object):
         nr_uniforms = gl.GLint()
         gl.glGetProgramiv(self.handle, gl.GL_ACTIVE_UNIFORMS, nr_uniforms)
 
-        for uniform_index in xrange(nr_uniforms.value):
+        for uniform_index in range(nr_uniforms.value):
             name, size, gl_type = gl.glGetActiveUniform(
                 self.handle,
                 uniform_index,
