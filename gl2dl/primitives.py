@@ -168,10 +168,7 @@ class RectBatch(list):
         self.VBO = gl.glGenBuffers(1)
         gl.glEnableVertexAttribArray(0)
 
-
     def get_triangles(self):
-        triangles = np.array([], dtype=np.float32)
-
         # fixme: profile this
         triangles = np.concatenate([
             rect._triangles + np.array(position, dtype=np.float32)
