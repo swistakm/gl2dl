@@ -52,10 +52,14 @@ class GLAPP(App):
             exit(1)
 
 if __name__ == '__main__':
-    size = 5, 5
+    size = 1, 1
 
     positions = [
-        (x * 10, y * 10) for x in range(50) for y in range(50)
+        (x * random.randint(20, 40), y * random.randint(20, 40)) for x in range(20) for y in range(20)
     ]
 
-    GLAPP(size=size, positions=positions).loop()
+    app = GLAPP(size=size, positions=positions)
+    app.enable_profiling('example7.prof')
+
+    app.loop()
+
