@@ -180,7 +180,6 @@ class RectBatch(list):
 
         return triangles
 
-
     def draw(self):
         # fixme: quadratic time performance, improve
         triangles = self.get_triangles()

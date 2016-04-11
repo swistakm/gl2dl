@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+import atexit
+import cProfile
 import sys
 
 import OpenGL.GL as gl
@@ -41,6 +43,9 @@ class App(object):
 
     def loop(self):
         glut.glutMainLoop()
+
+    def exit(self):
+        sys.exit(0)
 
     def _display(self):
         try:
@@ -86,3 +91,24 @@ class App(object):
         """Clear the windown buffer"""
         gl.glClearColor(*color)
         gl.glClear(gl.GL_COLOR_BUFFER_BIT)
+
+    def enable_profiling(self, filename=None):
+        """ Enable profiling session for application.
+
+        Profiler will quit on process exit. This is workaround for not being
+        able to controll event loop in GLUT.
+
+        :param filename: filename to save profiler stats to. If it is set to
+            None then stats are printed on stdout instead. Defaults to None
+        """
+        def quit_profiler_at_exit(profiler):
+            profiler.disable()
+
+            if filename:
+                profiler.dump_stats(filename)
+            else:
+                profiler.print_stats()
+
+        profiler = cProfile.Profile()
+        atexit.register(quit_profiler_at_exit, profiler)
+        profiler.enable()
