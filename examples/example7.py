@@ -3,6 +3,8 @@
 This example shows that there is need to draw rects in batches!
 """
 import random
+from time import time
+from math import cos, sin
 
 import OpenGL.GLUT as glut
 
@@ -30,17 +32,17 @@ class GLAPP(App):
         super(GLAPP, self).loop()
 
     def display(self):
+        for seed, row in enumerate(self.rect_batch):
+            r = random.Random(seed)
 
-        # # experimental
-        # for row in self.rect_batch:
-        #     pos = row[0]
-        #     row[0] = (
-        #         pos[0] + random.randint(-1, 1),
-        #         pos[1] + random.randint(-1, 1),
-        #     )
-        #
-        # self.light._shadows = ShadowMap(self.rect_batch.get_triangles())
-        # self.light._shadows.position = self.light.position
+            pos = row[0]
+            row[0] = (
+                pos[0] + sin(time() * 10 * r.random()),
+                pos[1] + cos(time() * 10 * r.random()),
+            )
+
+        self.light._shadows = ShadowMap(self.rect_batch.get_triangles())
+        self.light._shadows.position = self.light.position
 
         try:
             self.clear()
@@ -59,7 +61,6 @@ if __name__ == '__main__':
     ]
 
     app = GLAPP(size=size, positions=positions)
-    app.enable_profiling('example7.prof')
 
     app.loop()
 
