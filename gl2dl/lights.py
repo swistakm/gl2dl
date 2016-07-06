@@ -165,6 +165,8 @@ class GLight(object):
         uniform vec2 light_position;
         uniform lowp vec3 light_color;
         uniform float radius;
+        uniform float intensity;
+        uniform float falloff;
 
         out lowp vec4 out_color;
 
@@ -173,7 +175,10 @@ class GLight(object):
             // note: origin of gl_FragCoord is the lower-left corner
             //       and light_position is described in window space
             float distance = length(light_position - gl_FragCoord.xy);
-            float attenuation = radius / pow(distance, 1.25);
+            float attenuation = (
+                (intensity * pow(2, falloff - 1)) /
+                pow((distance/radius + 1), falloff + 1)
+            );
 
             out_color = vec4(
                 attenuation,
@@ -184,7 +189,12 @@ class GLight(object):
         }
     """
 
-    def __init__(self, color, position, occluders, radius=100):
+    def __init__(
+            self,
+            color, position, occluders=None,
+            radius=100, intensity=1,
+            falloff=1,
+    ):
         """
         TODO: world coordinates!
 
@@ -201,6 +211,8 @@ class GLight(object):
         self.position = position
         self.color = color
         self.radius = radius
+        self.intensity = intensity
+        self.falloff = falloff
 
         self.vertices = np.array([
             [-1, -1],
@@ -246,6 +258,24 @@ class GLight(object):
     def radius(self, value):
         self._shader.bind()
         self._shader['radius'] = value
+
+    @property
+    def intensity(self):
+        return self._shader['intensity']
+
+    @intensity.setter
+    def intensity(self, value):
+        self._shader.bind()
+        self._shader['intensity'] = value
+
+    @property
+    def falloff(self):
+        return self._shader['intensity']
+
+    @falloff.setter
+    def falloff(self, value):
+        self._shader.bind()
+        self._shader['falloff'] = value
 
     def _cut_shadows(self):
         # note:
