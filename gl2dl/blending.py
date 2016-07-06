@@ -41,9 +41,7 @@ def blending_rgba(
         rgb_mode=Mode.ADD,
         alpha_mode=Mode.ADD,
 ):
-    """ **Important:** does not support nesting yet
-
-    TODO: support nesting by remembering the state of GL_BLEND (see blending)
+    """ 
     :param rgb_source:
     :param rgb_destination:
     :param alpha_source:
@@ -52,6 +50,18 @@ def blending_rgba(
     :param alpha_mode:
 
     """
+    enabled = gl.glGetBoolean(gl.GL_BLEND)
+
+    if not enabled:
+        gl.glEnable(gl.GL_BLEND)
+
+    old_rgb_source = gl.glGetInteger(gl.GL_BLEND_SRC_RGB)
+    old_rgb_destination = gl.glGetInteger(gl.GL_BLEND_DST_RGB)
+    old_alpha_source = gl.glGetInteger(gl.GL_BLEND_SRC_ALPHA)
+    old_alpha_destination = gl.glGetInteger(gl.GL_BLEND_DST_ALPHA)
+    old_rgb_mode = gl.glGetInteger(gl.GL_BLEND_EQUATION_RGB)
+    old_alpha_mode = gl.glGetInteger(gl.GL_BLEND_EQUATION_ALPHA)
+
     gl.glEnable(gl.GL_BLEND)
     gl.glBlendEquationSeparate(rgb_mode, alpha_mode)
     gl.glBlendFuncSeparate(
@@ -59,9 +69,18 @@ def blending_rgba(
         alpha_source, alpha_destination
     )
 
-    yield
-
-    gl.glDisable(gl.GL_BLEND)
+    try:
+        yield
+    finally:
+        if enabled:
+            gl.glBlendEquationSeparate(old_rgb_mode, old_alpha_mode)
+            gl.glBlendFuncSeparate(
+                old_rgb_source, old_rgb_destination,
+                old_alpha_source, old_alpha_destination
+            )
+        else:
+            gl.glBlendEquationSeparate(old_rgb_mode, old_alpha_mode)
+            gl.glDisable(gl.GL_BLEND)
 
 
 @contextmanager
