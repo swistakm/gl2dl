@@ -4,7 +4,7 @@ This example shows that there is need to draw rects in batches!
 """
 import random
 from time import time
-from math import cos, sin
+from math import cos, sin, sqrt
 
 import OpenGL.GLUT as glut
 
@@ -21,12 +21,14 @@ class GLAPP(App):
             self.rect_batch.append([pos, BaseRect(*size)])
 
         occluders = self.rect_batch.get_triangles()
-        self.light = GLight((1, .5, .5), (0, 0,), occluders)
+        self.light = GLight((1, 0, 0), (0, 0,), occluders, radius=200)
 
     def on_mouse_move(self, x, y):
-        self.light.color = 1, 0, 1
-        self.light.position = x, glut.glutGet(glut.GLUT_WINDOW_HEIGHT) - y
-        self.light.radius = 200
+        y = glut.glutGet(glut.GLUT_WINDOW_HEIGHT) - y
+        delta = sqrt(x ** 2 + y ** 2) / 100
+
+        self.light.color = abs(sin(delta)), abs(cos(delta)), abs(sin(delta))
+        self.light.position = x, y
 
     def loop(self):
         super(GLAPP, self).loop()
@@ -57,7 +59,9 @@ if __name__ == '__main__':
     size = 1, 1
 
     positions = [
-        (x * random.randint(20, 40), y * random.randint(20, 40)) for x in range(20) for y in range(20)
+        (x * random.randint(20, 40), y * random.randint(20, 40))
+        for x in range(20)
+        for y in range(20)
     ]
 
     app = GLAPP(size=size, positions=positions)

@@ -184,7 +184,7 @@ class GLight(object):
         }
     """
 
-    def __init__(self, color, position, occluders):
+    def __init__(self, color, position, occluders, radius=100):
         """
         TODO: world coordinates!
 
@@ -196,10 +196,11 @@ class GLight(object):
 
         self._shadows = ShadowMap(
             occluders
-        )
+        ) if occluders is not None else None
 
         self.position = position
         self.color = color
+        self.radius = radius
 
         self.vertices = np.array([
             [-1, -1],
@@ -234,7 +235,8 @@ class GLight(object):
         with self._shader as active:
             active['light_position'] = value
 
-        self._shadows.position = value
+        if self._shadows:
+            self._shadows.position = value
 
     @property
     def radius(self):
@@ -279,6 +281,7 @@ class GLight(object):
             gl.glBindVertexArray(0)
             gl.glBindBuffer(gl.GL_ARRAY_BUFFER, 0)
 
-    def draw(self):
+    def draw(self, cut_shadows=True):
         self._draw_light()
-        self._cut_shadows()
+        if cut_shadows and self._shadows:
+            self._cut_shadows()

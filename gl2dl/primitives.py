@@ -177,7 +177,7 @@ class RectBatch(list):
 
         return triangles
 
-    def draw(self):
+    def draw(self, color=None):
         # fixme: quadratic time performance, improve
         triangles = self.get_triangles()
 
@@ -196,7 +196,7 @@ class RectBatch(list):
             )
 
             active['scale'] = 1.
-            active['color'] = [1, 1, 1, 1]
+            active['color'] = color or [1, 1, 1, 1]
 
             # draw rect triangles
             gl.glDrawArrays(gl.GL_TRIANGLES, 0, len(triangles))
