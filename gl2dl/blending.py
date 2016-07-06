@@ -43,7 +43,7 @@ def blending_rgba(
 ):
     """ **Important:** does not support nesting yet
 
-    TODO: support nesting by remembering the state of GL_BLEND
+    TODO: support nesting by remembering the state of GL_BLEND (see blending)
     :param rgb_source:
     :param rgb_destination:
     :param alpha_source:
@@ -70,19 +70,30 @@ def blending(
         destination=Factor.ZERO,
         mode=Mode.ADD,
 ):
-    """ **Important:** does not support nesting yet
-
-    TODO: support nesting by remembering the state of GL_BLEND
+    """
     :param source:
     :param destination:
     :param mode:
 
     """
-    gl.glEnable(gl.GL_BLEND)
+    enabled = gl.glGetBoolean(gl.GL_BLEND)
+    old_mode = gl.glGetInteger(gl.GL_BLEND_EQUATION)
+    old_source = gl.glGetInteger(gl.GL_BLEND_SRC)
+    old_destination = gl.glGetInteger(gl.GL_BLEND_DST)
+
+    if not enabled:
+        gl.glEnable(gl.GL_BLEND)
+
     gl.glBlendEquation(mode)
     gl.glBlendFunc(source, destination)
 
-    yield
+    try:
+        yield
 
-    gl.glDisable(gl.GL_BLEND)
+    finally:
+        if enabled:
+            gl.glBlendEquation(old_mode)
+            gl.glBlendFunc(old_source, old_destination)
+        else:
+            gl.glDisable(gl.GL_BLEND)
 
