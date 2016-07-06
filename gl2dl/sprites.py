@@ -11,28 +11,29 @@ from .shaders import ShaderProgram
 
 class Texture(object):
     def __init__(self, file_name, mode="RGBX"):
+        # todo: consider refactoring because it maybe can be moved somwhere
+        # todo: else
         self.VAO = gl.glGenVertexArrays(1)
         gl.glBindVertexArray(self.VAO)
 
         self._image = Image.open(file_name)
+        # note: different mode will require different argument in glTexImage2D
+        image_bytes = self._image.tobytes("raw", mode, 0, -1)
 
+        # GL texture object initialization
+        # todo: consolidate contract, consider inheriting from int or GLuint
+        # todo: and maybe using __new__ to create new "ints" objects
+        # todo: see OpenGL.GL.shaders.ShaderProgram for reference
         self.texture = gl.glGenTextures(1)
-
         gl.glBindTexture(gl.GL_TEXTURE_2D, self.texture)
         # note: check what it does!
         gl.glPixelStorei(gl.GL_UNPACK_ALIGNMENT, 1)
-
-        ix = self._image.size[0]
-        iy = self._image.size[1]
-        image_bytes = self._image.tobytes("raw", mode, 0, -1)
-
-        gl.glTexImage2D(gl.GL_TEXTURE_2D, 0, gl.GL_RGB, ix, iy, 0, gl.GL_RGBA, gl.GL_UNSIGNED_BYTE, image_bytes)  # noqa
-
+        # pass image data as pixels
+        gl.glTexImage2D(gl.GL_TEXTURE_2D, 0, gl.GL_RGB, self.width, self.height, 0, gl.GL_RGBA, gl.GL_UNSIGNED_BYTE, image_bytes)  # noqa
         gl.glTexParameter(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_MAG_FILTER, gl.GL_NEAREST)  # noqa
         gl.glTexParameter(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_MIN_FILTER, gl.GL_NEAREST)  # noqa
 
         self.uv_data = rect_triangles(0, 0, 1, 1)
-
         self.UVB = gl.glGenBuffers(1)
 
         gl.glBindBuffer(gl.GL_ARRAY_BUFFER, self.UVB)
