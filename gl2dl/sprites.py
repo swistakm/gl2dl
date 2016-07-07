@@ -88,7 +88,7 @@ class Sprite(object):
         void main(){
 
             // Output color = color of the texture at the specified UV
-            color = texture(texture_sampler, UV ).rgba;
+            color = texture(texture_sampler, UV).rgba;
         }
     """
 
@@ -140,6 +140,6 @@ class Sprite(object):
             gl.glActiveTexture(gl.GL_TEXTURE0)
             gl.glBindTexture(gl.GL_TEXTURE_2D, self._texture.texture)
             # note: use texture numbers
-            self._shader['texture_sampler'] = 0
+            active['texture_sampler'] = 0
 
             gl.glDrawArrays(gl.GL_TRIANGLES, 0, len(self.data))
