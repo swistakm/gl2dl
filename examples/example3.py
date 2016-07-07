@@ -5,7 +5,7 @@ from gl2dl.sprites import Sprite
 
 class GLAPP(App):
     def init(self):
-        self.sprite = Sprite('assets/marble.bmp', pivot=(128, 128))
+        self.sprite = Sprite('assets/marble.png', pivot=(128, 128))
 
     def display(self):
         try:

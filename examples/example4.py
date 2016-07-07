@@ -8,7 +8,7 @@ from gl2dl.sprites import Sprite
 
 class GLAPP(App):
     def init(self):
-        self.sprite = Sprite('assets/heart.jpg', pivot=(270, 160))
+        self.sprite = Sprite('assets/heart.png', pivot=(270, 160))
 
     def display(self):
         try:
