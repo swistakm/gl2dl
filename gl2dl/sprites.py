@@ -10,9 +10,10 @@ from .shaders import ShaderProgram
 
 
 class Texture(object):
-    def __init__(self, file_name, mode="RGBX"):
+    def __init__(self, file_name, mode="RGBA"):
         # todo: consider refactoring because it maybe can be moved somwhere
         # todo: else
+        self.file_name = file_name
         self.VAO = gl.glGenVertexArrays(1)
         gl.glBindVertexArray(self.VAO)
 
@@ -29,7 +30,7 @@ class Texture(object):
         # note: check what it does!
         gl.glPixelStorei(gl.GL_UNPACK_ALIGNMENT, 1)
         # pass image data as pixels
-        gl.glTexImage2D(gl.GL_TEXTURE_2D, 0, gl.GL_RGB, self.width, self.height, 0, gl.GL_RGBA, gl.GL_UNSIGNED_BYTE, image_bytes)  # noqa
+        gl.glTexImage2D(gl.GL_TEXTURE_2D, 0, gl.GL_RGBA, self.width, self.height, 0, gl.GL_RGBA, gl.GL_UNSIGNED_BYTE, image_bytes)  # noqa
         gl.glTexParameter(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_MAG_FILTER, gl.GL_NEAREST)  # noqa
         gl.glTexParameter(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_MIN_FILTER, gl.GL_NEAREST)  # noqa
 
@@ -79,7 +80,7 @@ class Sprite(object):
         in vec2 UV;
 
         // Ouput data
-        out vec3 color;
+        out vec4 color;
 
         // Values that stay constant for the whole mesh.
         uniform sampler2D texture_sampler;
@@ -87,8 +88,7 @@ class Sprite(object):
         void main(){
 
             // Output color = color of the texture at the specified UV
-            color = texture(texture_sampler, UV ).rgb;
-         //   color = vec3(UV, 0);
+            color = texture(texture_sampler, UV ).rgba;
         }
     """
 
@@ -137,9 +137,9 @@ class Sprite(object):
             gl.glBindBuffer(gl.GL_ARRAY_BUFFER, self._texture.UVB)
             gl.glVertexAttribPointer(1, 2, gl.GL_FLOAT, gl.GL_FALSE, 0, None)
 
-            gl.glDrawArrays(gl.GL_TRIANGLES, 0, len(self.data))
-
             gl.glActiveTexture(gl.GL_TEXTURE0)
             gl.glBindTexture(gl.GL_TEXTURE_2D, self._texture.texture)
             # note: use texture numbers
             self._shader['texture_sampler'] = 0
+
+            gl.glDrawArrays(gl.GL_TRIANGLES, 0, len(self.data))
