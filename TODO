@@ -1,0 +1,13 @@
+# GENERAL
+
+* add support for map generation
+* add cameras and scrolling
+* add better keyboard handlers
+
+
+# SPRITES & TEXTURES
+
+* add support for tilemaps
+* research topic of atlasses
+* research batching of sprites
+* review status of other than PNG textures support
