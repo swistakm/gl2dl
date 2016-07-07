@@ -73,3 +73,6 @@ ENV/
 
 # Pycharm project files
 .idea/
+
+# Mac OS stuff
+.DS_store
