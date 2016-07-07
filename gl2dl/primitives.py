@@ -131,33 +131,9 @@ class RectBatch(list):
 
     FIXME: maybe deque will be better representation
     """
-
-    vertex_code = """
-        #version 330 core
-
-        // Input vertex data, different for all executions of this shader.
-        layout(location = 0) in vec2 vertexPosition;
-
-        uniform mat4 model_view_projection;
-        uniform float scale;
-
-        void main(){
-            gl_Position =  model_view_projection * vec4(vertexPosition, 0, 1/scale);
-        }
-    """
-
-    fragment_code = """
-        #version 330 core
-        uniform vec4 color;
-
-        in vec2 vertex_position;
-
-        out lowp vec4 out_color;
-
-        void main(){
-            out_color = color;
-        }
-    """
+    # reuse shader code from rect as it is completely the same
+    vertex_code = Rect.vertex_code
+    fragment_code = Rect.fragment_code
 
     def __init__(self, *args, **kwargs):
         super(RectBatch, self).__init__(*args, **kwargs)
