@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from contextlib import contextmanager
+from functools import partial
 
 import OpenGL.GL as gl
 
@@ -116,3 +117,9 @@ def blending(
         else:
             gl.glDisable(gl.GL_BLEND)
 
+
+alpha_blend = partial(
+    blending,
+    source=Factor.SRC_ALPHA,
+    destination=Factor.ONE_MINUS_SRC_ALPHA
+)
