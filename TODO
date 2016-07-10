@@ -11,3 +11,18 @@
 * research topic of atlasses
 * research batching of sprites
 * review status of other than PNG textures support
+
+
+# FRAMEWORK FEATURES
+
+* distributing games with pyinstaller
+* documentation
+  * multi-os building & testing (dsitribution)
+  * playing sounds (pyrilla)
+  * all graphic features
+
+
+# PROJECT
+
+* name, branding and portal
+* community guidelines
