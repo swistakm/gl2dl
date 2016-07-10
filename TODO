@@ -3,7 +3,7 @@
 * add support for map generation
 * add cameras and scrolling
 * add better keyboard handlers
-
+* consider glfw support
 
 # SPRITES & TEXTURES
 
