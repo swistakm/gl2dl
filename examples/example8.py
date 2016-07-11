@@ -30,7 +30,7 @@ class GLAPP(App):
 
         self.framebuffer = FrameBuffer()
         self.fb_texture = FrameBufferTexture(512, 512)
-        self.lights_sprite = self.fb_texture.drawable()
+        self.lights_sprite = self.fb_texture.as_sprite()
 
     def on_mouse_move(self, x, y):
         self.mouse_light.position = x, glut.glutGet(glut.GLUT_WINDOW_HEIGHT) - y

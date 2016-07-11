@@ -107,6 +107,12 @@ class Rect(BaseRect):
         gl.glBufferData(gl.GL_ARRAY_BUFFER, self._triangles.nbytes, self._triangles, gl.GL_STATIC_DRAW)  # noqa
         gl.glEnableVertexAttribArray(0)
 
+        gl.glBindBuffer(gl.GL_ARRAY_BUFFER, self.VBO)
+        gl.glVertexAttribPointer(0, 2, gl.GL_FLOAT, gl.GL_FALSE, 0, None)
+
+        # unbind VBO
+        gl.glBindVertexArray(0)
+
     def draw(self, x, y, color, scale=1.):
         with self._shader as active:
             active['model_view_projection'] = ortho(
@@ -119,9 +125,6 @@ class Rect(BaseRect):
 
             # draw rect triangles
             gl.glBindVertexArray(self.VAO)
-            gl.glBindBuffer(gl.GL_ARRAY_BUFFER, self.VBO)
-            gl.glVertexAttribPointer(0, 2, gl.GL_FLOAT, gl.GL_FALSE, 0, None)
-
             gl.glDrawArrays(gl.GL_TRIANGLES, 0, len(self._triangles))
 
 
@@ -131,33 +134,9 @@ class RectBatch(list):
 
     FIXME: maybe deque will be better representation
     """
-
-    vertex_code = """
-        #version 330 core
-
-        // Input vertex data, different for all executions of this shader.
-        layout(location = 0) in vec2 vertexPosition;
-
-        uniform mat4 model_view_projection;
-        uniform float scale;
-
-        void main(){
-            gl_Position =  model_view_projection * vec4(vertexPosition, 0, 1/scale);
-        }
-    """
-
-    fragment_code = """
-        #version 330 core
-        uniform vec4 color;
-
-        in vec2 vertex_position;
-
-        out lowp vec4 out_color;
-
-        void main(){
-            out_color = color;
-        }
-    """
+    # reuse shader code from rect as it is completely the same
+    vertex_code = Rect.vertex_code
+    fragment_code = Rect.fragment_code
 
     def __init__(self, *args, **kwargs):
         super(RectBatch, self).__init__(*args, **kwargs)
@@ -181,6 +160,7 @@ class RectBatch(list):
         # fixme: quadratic time performance, improve
         triangles = self.get_triangles()
 
+        # fixme: no need to send buffer data every time batch is drawn
         gl.glBindBuffer(gl.GL_ARRAY_BUFFER, self.VBO)
         gl.glBufferData(gl.GL_ARRAY_BUFFER, triangles.nbytes, triangles, gl.GL_STATIC_DRAW)  # noqa
 
