@@ -8,6 +8,8 @@ import OpenGL.GLUT as glut
 
 
 class App(object):
+    ENABLE_DEFAULT_KEYBOARD_HOOKS = True
+
     def __init__(
         self,
         width=512,
@@ -33,7 +35,8 @@ class App(object):
         glut.glutTimerFunc(int(1000/60), self._timer, fps)
         glut.glutDisplayFunc(self._display)
 
-        glut.glutKeyboardFunc(self.keyboard)
+        glut.glutKeyboardFunc(self._keyboard)
+        glut.glutSpecialFunc(self._keyboard)
 
         glut.glutMotionFunc(self.on_mouse_move)
         glut.glutPassiveMotionFunc(self.on_mouse_move)
@@ -79,10 +82,15 @@ class App(object):
     def timer(self, fps):
         """User-defined timer handler stub"""
 
+    def _keyboard(self, key, *args):
+        if self.ENABLE_DEFAULT_KEYBOARD_HOOKS:
+            if key == b'\033':
+                self.exit()
+
+        self.keyboard(key, *args)
+
     def keyboard(self, key, *args):
         """User-defined kearboard event handler stub"""
-        if key == b'\033':
-            self.exit()
 
     def on_mouse_move(self, x, y):
         """User-defined "on mouse move" handler stub"""

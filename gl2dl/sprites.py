@@ -131,7 +131,6 @@ class Sprite(object):
         return vbo
 
     def _setup_uvb(self, attribute_index):
-        print("oldUVB")
         uv_coordinates = rect_triangles(0, 0, 1, 1)
 
         uvb = gl.glGenBuffers(1)
@@ -145,6 +144,7 @@ class Sprite(object):
         with self._shader as active:
             active['scale'] = scale
             active['model_view_projection'] = ortho(
+                # fixme: pluggable windowing interface or replace with glut
                 glut.glutGet(glut.GLUT_WINDOW_WIDTH),
                 glut.glutGet(glut.GLUT_WINDOW_HEIGHT),
                 x, y,

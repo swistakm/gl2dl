@@ -26,3 +26,11 @@
 
 * name, branding and portal
 * community guidelines
+
+
+# WINDOWING
+
+* add glfw support:
+  * replace all windowing code since glut is not feasible solution
+  * ... or add plugable window interface
+* consider bundling glfw dlls with data_files option in setuptools
