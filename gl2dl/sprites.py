@@ -101,12 +101,8 @@ class Sprite(object):
         else:
             self._texture = texture
 
+        self.pivot = pivot
         self._shader = ShaderProgram(self.vertex_code, self.fragment_code)
-
-        self.data = rect_triangles(
-            0, 0, self._texture.width, self._texture.height
-        ) - np.array(pivot, dtype=np.float32)
-        self.uv_data = rect_triangles(0, 0, 1, 1)
 
         # each sprite has it's own VAO
         self.VAO = gl.glGenVertexArrays(1)
@@ -114,20 +110,36 @@ class Sprite(object):
 
         # two generic vertex attribute arrays - one for VBO and one for UVB
         gl.glEnableVertexAttribArray(0)
+        self.VBO = self._setup_vbo(0)
+
         gl.glEnableVertexAttribArray(1)
-
-        self.VBO = gl.glGenBuffers(1)
-        gl.glBindBuffer(gl.GL_ARRAY_BUFFER, self.VBO)
-        gl.glBufferData(gl.GL_ARRAY_BUFFER, self.data.nbytes, self.data, gl.GL_STATIC_DRAW)  # noqa
-        gl.glVertexAttribPointer(0, 2, gl.GL_FLOAT, gl.GL_FALSE, 0, None)
-
-        self.UVB = gl.glGenBuffers(1)
-        gl.glBindBuffer(gl.GL_ARRAY_BUFFER, self.UVB)
-        gl.glBufferData(gl.GL_ARRAY_BUFFER, self.uv_data.nbytes, self.uv_data, gl.GL_STATIC_READ)  # noqa
-        gl.glVertexAttribPointer(1, 2, gl.GL_FLOAT, gl.GL_FALSE, 0, None)
+        self.UVB = self._setup_uvb(1)
 
         # finally unbind VBO
         gl.glBindVertexArray(0)
+
+    def _setup_vbo(self, attribute_index):
+        vertices = rect_triangles(
+            0, 0, self._texture.width, self._texture.height
+        ) - np.array(self.pivot, dtype=np.float32)
+
+        vbo = gl.glGenBuffers(1)
+        gl.glBindBuffer(gl.GL_ARRAY_BUFFER, vbo)
+        gl.glBufferData(gl.GL_ARRAY_BUFFER, vertices.nbytes, vertices, gl.GL_STATIC_DRAW)  # noqa
+        gl.glVertexAttribPointer(attribute_index, 2, gl.GL_FLOAT, gl.GL_FALSE, 0, None)  # noqa
+
+        return vbo
+
+    def _setup_uvb(self, attribute_index):
+        print("oldUVB")
+        uv_coordinates = rect_triangles(0, 0, 1, 1)
+
+        uvb = gl.glGenBuffers(1)
+        gl.glBindBuffer(gl.GL_ARRAY_BUFFER, uvb)
+        gl.glBufferData(gl.GL_ARRAY_BUFFER, uv_coordinates.nbytes, uv_coordinates, gl.GL_STATIC_READ)  # noqa
+        gl.glVertexAttribPointer(attribute_index, 2, gl.GL_FLOAT, gl.GL_FALSE, 0, None)  # noqa
+
+        return uvb
 
     def draw(self, x=0, y=0, scale=1.0):
         with self._shader as active:
@@ -145,7 +157,8 @@ class Sprite(object):
             # note: use texture numbers
             active['texture_sampler'] = 0
 
-            gl.glDrawArrays(gl.GL_TRIANGLES, 0, len(self.data))
+            # note: sprite polygon has always 6 vertices
+            gl.glDrawArrays(gl.GL_TRIANGLES, 0, 6)
 
 
 class StaticAnimationAtlas(Texture):
@@ -175,7 +188,6 @@ class StaticAnimationAtlas(Texture):
         )
 
 
-
 class AnimatedSprite(Sprite):
     fragment_code = """
         #version 330 core
@@ -202,22 +214,27 @@ class AnimatedSprite(Sprite):
         self.frame_size = frame_size
         super(AnimatedSprite, self).__init__(file_name, texture, pivot)
 
-        # todo: consider refactoring so we do not need to redefine buffers
-        gl.glBindVertexArray(self.VAO)
-        # note: redefine existing UVB buffer but delete it first
-        gl.glDeleteBuffers(1, [self.UVB])
-        self.UVB = gl.glGenBuffers(1)
-        self.uv_data = self._texture.get_uv_data(*frame_size)
-        gl.glBindBuffer(gl.GL_ARRAY_BUFFER, self.UVB)
-        gl.glBufferData(gl.GL_ARRAY_BUFFER, self.uv_data.nbytes, self.uv_data, gl.GL_STATIC_READ)  # noqa
-        gl.glVertexAttribPointer(1, 2, gl.GL_FLOAT, gl.GL_FALSE, 0, None)
+    def _setup_vbo(self, attribute_index):
+        vertices = rect_triangles(
+            0, 0, *self.frame_size
+        ) - np.array(self.pivot, dtype=np.float32)
 
-        gl.glBindVertexArray(0)
+        vbo = gl.glGenBuffers(1)
+        gl.glBindBuffer(gl.GL_ARRAY_BUFFER, vbo)
+        gl.glBufferData(gl.GL_ARRAY_BUFFER, vertices.nbytes, vertices, gl.GL_STATIC_DRAW)  # noqa
+        gl.glVertexAttribPointer(attribute_index, 2, gl.GL_FLOAT, gl.GL_FALSE, 0, None)  # noqa
+
+    def _setup_uvb(self, attribute_index):
+        uvb = gl.glGenBuffers(1)
+
+        uv_coordinates = self._texture.get_uv_data(*self.frame_size)
+        gl.glBindBuffer(gl.GL_ARRAY_BUFFER, uvb)
+        gl.glBufferData(gl.GL_ARRAY_BUFFER, uv_coordinates.nbytes, uv_coordinates, gl.GL_STATIC_READ)  # noqa
+        gl.glVertexAttribPointer(attribute_index, 2, gl.GL_FLOAT, gl.GL_FALSE, 0, None)  # noqa
+        return uvb
 
     def draw(self, x=0, y=0, scale=1.0, frame=0):
         with self._shader as active:
             active['offset'] = self._texture.get_frame_offset(frame, *self.frame_size)  # noqa
 
-        # fixme: scale, pivot and sprite sizes are taken directly from texture
-        # fixme: and this is serious bug
-        super(AnimatedSprite, self).draw(x, y)
+        super(AnimatedSprite, self).draw(x, y, scale)

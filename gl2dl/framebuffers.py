@@ -22,7 +22,7 @@ class FrameBufferTexture(object):
         gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_MIN_FILTER, gl.GL_LINEAR)  # noqa
         gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_MAG_FILTER, gl.GL_LINEAR)  # noqa
 
-    def drawable(self):
+    def as_sprite(self):
         """ Return drawable object that can be rendered to buffer
         """
         return Sprite(texture=self)
