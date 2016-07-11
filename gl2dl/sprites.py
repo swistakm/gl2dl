@@ -14,8 +14,6 @@ class Texture(object):
         # todo: consider refactoring because it maybe can be moved somwhere
         # todo: else
         self.file_name = file_name
-        self.VAO = gl.glGenVertexArrays(1)
-        gl.glBindVertexArray(self.VAO)
 
         self._image = Image.open(file_name)
         # note: different mode will require different argument in glTexImage2D
@@ -33,14 +31,6 @@ class Texture(object):
         gl.glTexImage2D(gl.GL_TEXTURE_2D, 0, gl.GL_RGBA, self.width, self.height, 0, gl.GL_RGBA, gl.GL_UNSIGNED_BYTE, image_bytes)  # noqa
         gl.glTexParameter(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_MAG_FILTER, gl.GL_NEAREST)  # noqa
         gl.glTexParameter(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_MIN_FILTER, gl.GL_NEAREST)  # noqa
-
-        self.uv_data = rect_triangles(0, 0, 1, 1)
-        self.UVB = gl.glGenBuffers(1)
-
-        gl.glBindBuffer(gl.GL_ARRAY_BUFFER, self.UVB)
-        gl.glBufferData(gl.GL_ARRAY_BUFFER, self.uv_data.nbytes, self.uv_data, gl.GL_STATIC_READ)  # noqa
-        # note: location of buffer?
-        gl.glEnableVertexAttribArray(1)
 
     @property
     def width(self):
@@ -115,11 +105,28 @@ class Sprite(object):
         self.data = rect_triangles(
             0, 0, self._texture.width, self._texture.height
         ) - np.array(pivot, dtype=np.float32)
+        self.uv_data = rect_triangles(0, 0, 1, 1)
+
+        # each sprite has it's own VAO
+        self.VAO = gl.glGenVertexArrays(1)
+        gl.glBindVertexArray(self.VAO)
+
+        # two generic vertex attribute arrays - one for VBO and one for UVB
+        gl.glEnableVertexAttribArray(0)
+        gl.glEnableVertexAttribArray(1)
 
         self.VBO = gl.glGenBuffers(1)
         gl.glBindBuffer(gl.GL_ARRAY_BUFFER, self.VBO)
         gl.glBufferData(gl.GL_ARRAY_BUFFER, self.data.nbytes, self.data, gl.GL_STATIC_DRAW)  # noqa
-        gl.glEnableVertexAttribArray(0)
+        gl.glVertexAttribPointer(0, 2, gl.GL_FLOAT, gl.GL_FALSE, 0, None)
+
+        self.UVB = gl.glGenBuffers(1)
+        gl.glBindBuffer(gl.GL_ARRAY_BUFFER, self.UVB)
+        gl.glBufferData(gl.GL_ARRAY_BUFFER, self.uv_data.nbytes, self.uv_data, gl.GL_STATIC_READ)  # noqa
+        gl.glVertexAttribPointer(1, 2, gl.GL_FLOAT, gl.GL_FALSE, 0, None)
+
+        # finally unbind VBO
+        gl.glBindVertexArray(0)
 
     def draw(self, x=0, y=0, scale=1.0):
         with self._shader as active:
@@ -130,12 +137,7 @@ class Sprite(object):
                 x, y,
             )
 
-            gl.glBindVertexArray(self._texture.VAO)
-            gl.glBindBuffer(gl.GL_ARRAY_BUFFER, self.VBO)
-            gl.glVertexAttribPointer(0, 2, gl.GL_FLOAT, gl.GL_FALSE, 0, None)
-
-            gl.glBindBuffer(gl.GL_ARRAY_BUFFER, self._texture.UVB)
-            gl.glVertexAttribPointer(1, 2, gl.GL_FLOAT, gl.GL_FALSE, 0, None)
+            gl.glBindVertexArray(self.VAO)
 
             gl.glActiveTexture(gl.GL_TEXTURE0)
             gl.glBindTexture(gl.GL_TEXTURE_2D, self._texture.texture)

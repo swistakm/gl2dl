@@ -107,6 +107,12 @@ class Rect(BaseRect):
         gl.glBufferData(gl.GL_ARRAY_BUFFER, self._triangles.nbytes, self._triangles, gl.GL_STATIC_DRAW)  # noqa
         gl.glEnableVertexAttribArray(0)
 
+        gl.glBindBuffer(gl.GL_ARRAY_BUFFER, self.VBO)
+        gl.glVertexAttribPointer(0, 2, gl.GL_FLOAT, gl.GL_FALSE, 0, None)
+
+        # unbind VBO
+        gl.glBindVertexArray(0)
+
     def draw(self, x, y, color, scale=1.):
         with self._shader as active:
             active['model_view_projection'] = ortho(
@@ -119,9 +125,6 @@ class Rect(BaseRect):
 
             # draw rect triangles
             gl.glBindVertexArray(self.VAO)
-            gl.glBindBuffer(gl.GL_ARRAY_BUFFER, self.VBO)
-            gl.glVertexAttribPointer(0, 2, gl.GL_FLOAT, gl.GL_FALSE, 0, None)
-
             gl.glDrawArrays(gl.GL_TRIANGLES, 0, len(self._triangles))
 
 
@@ -157,6 +160,7 @@ class RectBatch(list):
         # fixme: quadratic time performance, improve
         triangles = self.get_triangles()
 
+        # fixme: no need to send buffer data every time batch is drawn
         gl.glBindBuffer(gl.GL_ARRAY_BUFFER, self.VBO)
         gl.glBufferData(gl.GL_ARRAY_BUFFER, triangles.nbytes, triangles, gl.GL_STATIC_DRAW)  # noqa
 
