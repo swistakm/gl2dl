@@ -41,21 +41,6 @@ class Texture(object):
         return self._image.size[1]
 
 
-class StaticAnimationAtlas(Texture):
-    def __init__(self, filename, mode="RGBA"):
-        super(StaticAnimationAtlas, self).__init__(filename, mode)
-
-    def get_frame_offset(self, frame_index, width, height):
-        div, mod = divmod(width * frame_index, self.width)
-        pixel_y_offset = div * height
-        pixel_x_offset = mod
-
-        return (
-            self.width / float(pixel_x_offset),
-            self.height / float(pixel_y_offset),
-        )
-
-
 class Sprite(object):
     vertex_code = """
         #version 330 core
@@ -96,6 +81,7 @@ class Sprite(object):
             color = texture(texture_sampler, UV).rgba;
         }
     """
+    TEXTURE_CLASS = Texture
 
     def __init__(self, file_name=None, texture=None, pivot=(0, 0)):
         """
@@ -111,7 +97,7 @@ class Sprite(object):
             )
 
         if file_name:
-            self._texture = Texture(file_name)
+            self._texture = self.TEXTURE_CLASS(file_name)
         else:
             self._texture = texture
 
@@ -160,3 +146,78 @@ class Sprite(object):
             active['texture_sampler'] = 0
 
             gl.glDrawArrays(gl.GL_TRIANGLES, 0, len(self.data))
+
+
+class StaticAnimationAtlas(Texture):
+    def __init__(self, filename, mode="RGBA"):
+        super(StaticAnimationAtlas, self).__init__(filename, mode)
+
+    def get_frame_offset(self, frame_index, width, height):
+        # note: cap frames for frame index overflow so user can issue
+        #       `draw(frame=time())` in animated sprites
+        maxframes = int(self.width / width) * int(self.height / width)
+
+        div, mod = divmod(width * (int(frame_index) % maxframes), self.width)
+        # note: assume left-to-right top-to-bottom ordering of frames
+        # note: image starts in top-left corner
+        pixel_y_offset = self.height - div * height
+        pixel_x_offset = mod
+
+        return (
+            float(pixel_x_offset) / self.width,
+            float(pixel_y_offset) / self.height,
+        )
+
+    def get_uv_data(self, width, height):
+        return rect_triangles(
+            0, 0,
+            float(width) / self.width, float(height) / self.height
+        )
+
+
+
+class AnimatedSprite(Sprite):
+    fragment_code = """
+        #version 330 core
+
+        // Interpolated values from the vertex shaders
+        in vec2 UV;
+
+        // Ouput data
+        out vec4 color;
+
+        // Values that stay constant for the whole mesh.
+        uniform sampler2D texture_sampler;
+        uniform vec2 offset;
+
+        void main(){
+
+            // Output color = color of the texture at the specified UV
+            color = texture(texture_sampler, UV+offset).rgba;
+        }
+    """
+    TEXTURE_CLASS = StaticAnimationAtlas
+
+    def __init__(self, frame_size, file_name=None, texture=None, pivot=(0, 0)):
+        self.frame_size = frame_size
+        super(AnimatedSprite, self).__init__(file_name, texture, pivot)
+
+        # todo: consider refactoring so we do not need to redefine buffers
+        gl.glBindVertexArray(self.VAO)
+        # note: redefine existing UVB buffer but delete it first
+        gl.glDeleteBuffers(1, [self.UVB])
+        self.UVB = gl.glGenBuffers(1)
+        self.uv_data = self._texture.get_uv_data(*frame_size)
+        gl.glBindBuffer(gl.GL_ARRAY_BUFFER, self.UVB)
+        gl.glBufferData(gl.GL_ARRAY_BUFFER, self.uv_data.nbytes, self.uv_data, gl.GL_STATIC_READ)  # noqa
+        gl.glVertexAttribPointer(1, 2, gl.GL_FLOAT, gl.GL_FALSE, 0, None)
+
+        gl.glBindVertexArray(0)
+
+    def draw(self, x=0, y=0, scale=1.0, frame=0):
+        with self._shader as active:
+            active['offset'] = self._texture.get_frame_offset(frame, *self.frame_size)  # noqa
+
+        # fixme: scale, pivot and sprite sizes are taken directly from texture
+        # fixme: and this is serious bug
+        super(AnimatedSprite, self).draw(x, y)
