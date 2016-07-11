@@ -41,6 +41,21 @@ class Texture(object):
         return self._image.size[1]
 
 
+class StaticAnimationAtlas(Texture):
+    def __init__(self, filename, mode="RGBA"):
+        super(StaticAnimationAtlas, self).__init__(filename, mode)
+
+    def get_frame_offset(self, frame_index, width, height):
+        div, mod = divmod(width * frame_index, self.width)
+        pixel_y_offset = div * height
+        pixel_x_offset = mod
+
+        return (
+            self.width / float(pixel_x_offset),
+            self.height / float(pixel_y_offset),
+        )
+
+
 class Sprite(object):
     vertex_code = """
         #version 330 core
