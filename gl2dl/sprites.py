@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
 import OpenGL.GL as gl
-import OpenGL.GLUT as glut
 
 from PIL import Image
 import numpy as np
 
 from .primitives import ortho, rect_triangles
 from .shaders import ShaderProgram
+from .app import window
 
 
 class Texture(object):
@@ -147,9 +147,8 @@ class Sprite(object):
         with self._shader as active:
             active['scale'] = scale
             active['model_view_projection'] = ortho(
-                # fixme: pluggable windowing interface or replace with glut
-                glut.glutGet(glut.GLUT_WINDOW_WIDTH),
-                glut.glutGet(glut.GLUT_WINDOW_HEIGHT),
+                window.width,
+                window.height,
                 x, y,
                 flip_x, flip_y
             )

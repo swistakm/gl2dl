@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 import OpenGL.GL as gl
-import OpenGL.GLUT as glut
 
 from . import blending
 from .shaders import ShaderProgram
 from .primitives import ortho
+from .app import window
 
 import numpy as np
 
@@ -118,8 +118,8 @@ class ShadowMap(object):
 
             with self._shader as active:
                 model_view_projection = ortho(
-                    glut.glutGet(glut.GLUT_WINDOW_WIDTH),
-                    glut.glutGet(glut.GLUT_WINDOW_HEIGHT),
+                    window.width,
+                    window.height,
                 )
                 active['model_view_projection'] = model_view_projection
 

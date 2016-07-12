@@ -1,11 +1,9 @@
 # -*- coding: utf-8 -*-
 from OpenGL import GL as gl
-import OpenGL.GLUT as glut
-
 import numpy as np
 
 from .shaders import ShaderProgram
-
+from .app import window
 
 def rect_triangles(x1, y1, x2, y2):
     return np.array([
@@ -122,8 +120,8 @@ class Rect(BaseRect):
     def draw(self, x, y, color, scale=1.):
         with self._shader as active:
             active['model_view_projection'] = ortho(
-                glut.glutGet(glut.GLUT_WINDOW_WIDTH),
-                glut.glutGet(glut.GLUT_WINDOW_HEIGHT),
+                window.width,
+                window.height,
                 x, y,
             )
             active['scale'] = scale
@@ -176,8 +174,8 @@ class RectBatch(list):
 
         with self._shader as active:
             active['model_view_projection'] = ortho(
-                glut.glutGet(glut.GLUT_WINDOW_WIDTH),
-                glut.glutGet(glut.GLUT_WINDOW_HEIGHT),
+                window.width,
+                window.height,
                 0, 0,
             )
 
