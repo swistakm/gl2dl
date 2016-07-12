@@ -17,7 +17,7 @@ class Texture(object):
 
         self._image = Image.open(file_name)
         # note: different mode will require different argument in glTexImage2D
-        image_bytes = self._image.tobytes("raw", mode, 0, -1)
+        image_bytes = self._image.convert(mode).tobytes("raw", mode, 0, -1)
 
         # GL texture object initialization
         # todo: consolidate contract, consider inheriting from int or GLuint
