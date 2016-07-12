@@ -9,12 +9,12 @@ from time import time
 import traceback
 import sys
 
-from gl2dl.app import GlutApp
+from gl2dl.app import GlutApp, GlfwApp
 from gl2dl.blending import alpha_blend
 from gl2dl.sprites import AnimatedSprite
 
 
-class GLAPP(GlutApp):
+class GLAPP(GlfwApp):
     def init(self):
         self.numbers = AnimatedSprite(
             # our spritesheet consists of 16x16 squares
@@ -42,7 +42,7 @@ class GLAPP(GlutApp):
         self.flip_x = False
         print(self.current_subsheet)
 
-    def keyboard(self, key, *args):
+    def on_key(self, key, *args):
         self.current_subsheet = next(self.subsheets)
         self.flip_x = random.choice([True, False])
 

@@ -4,7 +4,7 @@ from math import sin, cos
 import traceback
 import sys
 
-from gl2dl.app import GlutApp
+from gl2dl.app import GlutApp, GlfwApp
 from gl2dl.sprites import Sprite
 
 

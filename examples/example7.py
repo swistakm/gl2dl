@@ -8,14 +8,13 @@ from math import cos, sin, sqrt
 import traceback
 import sys
 
-import OpenGL.GLUT as glut
-
-from gl2dl.app import GlutApp
+from gl2dl.app import GlutApp, GlfwApp
 from gl2dl.lights import GLight, ShadowMap
 from gl2dl.primitives import BaseRect, RectBatch
+from gl2dl.app import window
 
 
-class GLAPP(GlutApp):
+class GLAPP(GlfwApp):
     def init(self, size, positions):
         self.rect_batch = RectBatch()
 
@@ -26,7 +25,7 @@ class GLAPP(GlutApp):
         self.light = GLight((1, 0, 0), (0, 0,), occluders, radius=200)
 
     def on_mouse_move(self, x, y):
-        y = glut.glutGet(glut.GLUT_WINDOW_HEIGHT) - y
+        y = window.height - y
         delta = sqrt(x ** 2 + y ** 2) / 100
 
         self.light.color = abs(sin(delta)), abs(cos(delta)), abs(sin(delta))

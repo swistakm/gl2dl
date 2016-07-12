@@ -5,6 +5,7 @@ import sys
 
 import OpenGL.GL as gl
 import OpenGL.GLUT as glut
+import glfw
 
 
 class WindowState(object):
@@ -79,26 +80,20 @@ class BaseApp(object):
         gl.glClearColor(*color)
         gl.glClear(gl.GL_COLOR_BUFFER_BIT)
 
-    def _keyboard(self, key, *args):
-        if self.ENABLE_DEFAULT_KEYBOARD_HOOKS:
-            if key == b'\033':
-                self.exit()
-
-        self.keyboard(key, *args)
-
-    def keyboard(self, key, *args):
+    def on_key(self, key, *args):
         """User-defined kearboard event handler stub"""
 
     def on_mouse_move(self, x, y):
         """User-defined "on mouse move" handler stub"""
 
-    def exit(self):
+    def on_resize(self, width, height):
+        """reshape handler stub"""
+
+    def on_exit(self):
         sys.exit(0)
 
 
 class GlutApp(BaseApp):
-    ENABLE_DEFAULT_KEYBOARD_HOOKS = True
-
     class GlutWindowContext(object):
         @property
         def width(self):
@@ -127,15 +122,15 @@ class GlutApp(BaseApp):
         glut.glutCreateWindow(window_name)
         glut.glutReshapeWindow(self.width, self.height)
 
-        glut.glutReshapeFunc(self._reshape)
+        glut.glutReshapeFunc(self._resize_callback)
         glut.glutTimerFunc(int(1000/60), self._timer, fps)
         glut.glutDisplayFunc(self._display)
 
-        glut.glutKeyboardFunc(self._keyboard)
-        glut.glutSpecialFunc(self._keyboard)
+        glut.glutKeyboardFunc(self._keyboard_callback)
+        glut.glutSpecialFunc(self._keyboard_callback)
 
-        glut.glutMotionFunc(self.on_mouse_move)
-        glut.glutPassiveMotionFunc(self.on_mouse_move)
+        glut.glutMotionFunc(self._mouse_callback)
+        glut.glutPassiveMotionFunc(self._mouse_callback)
 
         window.attach_context(self.GlutWindowContext())
 
@@ -162,11 +157,11 @@ class GlutApp(BaseApp):
     def display(self):
         """User defined display handler stub"""
 
-    def _reshape(self, width, height):
+    def _resize_callback(self, width, height):
         gl.glViewport(0, 0, width, height)
-        self.reshape(width, height)
+        self.on_resize(width, height)
 
-    def reshape(self, width, height):
+    def on_resize(self, width, height):
         """reshape handler stub"""
 
     def _timer(self, fps):
@@ -177,6 +172,99 @@ class GlutApp(BaseApp):
     def timer(self, fps):
         """User-defined timer handler stub"""
 
+    def _keyboard_callback(self, key, *args):
+        if self.ENABLE_DEFAULT_KEYBOARD_HOOKS:
+            if key == b'\033':
+                self.on_exit()
 
-class GLFWApp(BaseApp):
-    pass
+        self.on_key(key, *args)
+
+    def _mouse_callback(self, x, y):
+        self.on_mouse_move(x, y)
+
+
+class GlfwApp(BaseApp):
+    class GlfwWindowContext(object):
+        def __init__(self, context_window):
+            self.context_window = context_window
+
+        @property
+        def width(self):
+            return glfw.get_window_size(self.context_window)[0]
+
+        @property
+        def height(self):
+            return glfw.get_window_size(self.context_window)[1]
+
+    def __init__(
+        self,
+        width=512,
+        height=512,
+        fps=60,
+        window_name='gl2dl rocks!',
+        **kwargs
+    ):
+        if not glfw.init():
+            print("Could not initialize OpenGL context")
+            self.on_exit()
+
+        # Create a windowed mode window and its OpenGL context
+        self.window = glfw.create_window(
+            width, height, window_name, None, None
+        )
+
+        if not self.window:
+            glfw.terminate()
+            print("Could not initialize Window")
+            self.on_exit()
+
+        # Make the window's context current
+        glfw.make_context_current(self.window)
+        window.attach_context(self.GlfwWindowContext(self.window))
+
+        glfw.set_key_callback(self.window, self._keyboard_callback)
+        glfw.set_cursor_pos_callback(self.window, self._mouse_callback)
+        glfw.set_window_size_callback(self.window, self._resize_callback)
+        super(GlfwApp, self).__init__(**kwargs)
+
+    def loop(self):
+        # Loop until the user closes the window
+        while not glfw.window_should_close(self.window):
+            # Render here, e.g. using pyOpenGL
+            self._display()
+            # Poll for and process events
+            glfw.poll_events()
+
+        glfw.terminate()
+        self.on_exit()
+
+    def _display(self):
+        try:
+            self.display()
+        finally:
+            gl.glBindVertexArray(0)
+            gl.glUseProgram(0)
+
+            gl.glBindBuffer(gl.GL_ARRAY_BUFFER, 0)
+            gl.glBindFramebuffer(gl.GL_FRAMEBUFFER, 0)
+
+            glfw.swap_buffers(self.window)
+
+    def display(self):
+        """User defined diplay handler stub"""
+
+    def _keyboard_callback(self, window, key, scancode, action, mods):
+        if self.ENABLE_DEFAULT_KEYBOARD_HOOKS:
+            if key == 256:
+                self.on_exit()
+
+        self.on_key(key, scancode, action, mods)
+
+    def _mouse_callback(self, window, x, y):
+        self.on_mouse_move(x, y)
+
+    def _resize_callback(self, window, width, height):
+        gl.glViewport(0, 0, width, height)
+        self.on_resize(width, height)
+
+

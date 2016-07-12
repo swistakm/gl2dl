@@ -2,11 +2,11 @@
 import traceback
 import sys
 
-from gl2dl.app import GlutApp
+from gl2dl.app import GlutApp, GlfwApp
 from gl2dl.sprites import Sprite
 
 
-class GLAPP(GlutApp):
+class GLAPP(GlfwApp):
     def init(self):
         self.sprite = Sprite('assets/marble.png', pivot=(128, 128))
 

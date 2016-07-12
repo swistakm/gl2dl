@@ -5,16 +5,15 @@ This example shows that there is need to draw rects in batches!
 import traceback
 import sys
 
-import OpenGL.GLUT as glut
-
 import numpy as np
 
-from gl2dl.app import GlutApp
+from gl2dl.app import GlutApp, GlfwApp
 from gl2dl.lights import GLight
 from gl2dl.primitives import rect_triangles, Rect
+from gl2dl.app import window
 
 
-class GLAPP(GlutApp):
+class GLAPP(GlfwApp):
     def init(self, size, positions):
         self.rect = Rect(*size)
 
@@ -31,7 +30,7 @@ class GLAPP(GlutApp):
 
     def on_mouse_move(self, x, y):
         self.light.color = 1, 0, 1
-        self.light.position = x, glut.glutGet(glut.GLUT_WINDOW_HEIGHT) - y
+        self.light.position = x, window.height - y
         self.light.radius = 200
 
     def loop(self):

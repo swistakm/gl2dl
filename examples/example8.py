@@ -6,16 +6,14 @@ import random
 import traceback
 import sys
 
-import OpenGL.GLUT as glut
-
-from gl2dl.app import GlutApp
+from gl2dl.app import GlutApp, GlfwApp
 from gl2dl.lights import GLight
 from gl2dl.primitives import BaseRect, RectBatch
 from gl2dl import blending
 from gl2dl.framebuffers import FrameBuffer, FrameBufferTexture
+from gl2dl.app import window
 
-
-class GLAPP(GlutApp):
+class GLAPP(GlfwApp):
     def init(self, size, positions):
         self.rect_batch = RectBatch()
 
@@ -35,7 +33,7 @@ class GLAPP(GlutApp):
         self.lights_sprite = self.fb_texture.as_sprite()
 
     def on_mouse_move(self, x, y):
-        self.mouse_light.position = x, glut.glutGet(glut.GLUT_WINDOW_HEIGHT) - y
+        self.mouse_light.position = x, window.height - y
 
     def loop(self):
         super(GLAPP, self).loop()
