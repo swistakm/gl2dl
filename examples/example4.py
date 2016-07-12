@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 from time import time
 from math import sin, cos
+import traceback
+import sys
 
 from gl2dl.app import App
 from gl2dl.sprites import Sprite
@@ -21,7 +23,7 @@ class GLAPP(App):
             )
 
         except Exception as err:
-            print err
+            traceback.print_exc(file=sys.stdout)
             exit(1)
 
 

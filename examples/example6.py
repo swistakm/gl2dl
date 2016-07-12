@@ -2,6 +2,8 @@
 """
 This example shows that there is need to draw rects in batches!
 """
+import traceback
+import sys
 
 import OpenGL.GLUT as glut
 
@@ -43,7 +45,7 @@ class GLAPP(App):
                 self.rect.draw(*position, color=(1, 1, 1))
 
         except Exception as err:
-            print(err)
+            traceback.print_exc(file=sys.stdout)
             exit(1)
 
 if __name__ == '__main__':

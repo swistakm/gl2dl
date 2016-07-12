@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
-from gl2dl.app import App
+import traceback
+import sys
+
 from gl2dl.sprites import Sprite
 
 
@@ -13,7 +15,7 @@ class GLAPP(App):
             self.sprite.draw(x=256, y=256, scale=1)
 
         except Exception as err:
-            print err
+            traceback.print_exc(file=sys.stdout)
             exit(1)
 
 

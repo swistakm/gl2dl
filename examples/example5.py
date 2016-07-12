@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
-# -*- coding: utf-8 -*-
 from time import time
 from math import sin, cos
+import traceback
+import sys
 
 from gl2dl.app import App
 from gl2dl.primitives import Rect
@@ -15,7 +16,6 @@ class GLAPP(App):
     def display(self):
         try:
             self.clear()
-
             self.rect.draw(
                 x=sin(time()) * 128 + 256,
                 y=cos(time()) * 128 + 256,
@@ -28,7 +28,7 @@ class GLAPP(App):
             )
 
         except Exception as err:
-            print(err)
+            traceback.print_exc(file=sys.stdout)
             exit(1)
 
 if __name__ == '__main__':

@@ -6,6 +6,8 @@ Example of simple animated sprites.
 from itertools import cycle
 import random
 from time import time
+import traceback
+import sys
 
 from gl2dl.app import App
 from gl2dl.blending import alpha_blend
@@ -63,9 +65,8 @@ class GLAPP(App):
                 )
 
         except Exception as err:
-            print(err)
+            traceback.print_exc(file=sys.stdout)
             exit(1)
-
 
 if __name__ == '__main__':
     GLAPP().loop()
