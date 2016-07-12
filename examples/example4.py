@@ -4,11 +4,11 @@ from math import sin, cos
 import traceback
 import sys
 
-from gl2dl.app import App
+from gl2dl.app import GlutApp
 from gl2dl.sprites import Sprite
 
 
-class GLAPP(App):
+class GLAPP(GlutApp):
     def init(self):
         self.sprite = Sprite('assets/heart.png', pivot=(270, 160))
 

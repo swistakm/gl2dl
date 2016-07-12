@@ -9,12 +9,12 @@ import OpenGL.GLUT as glut
 
 import numpy as np
 
-from gl2dl.app import App
+from gl2dl.app import GlutApp
 from gl2dl.lights import GLight
 from gl2dl.primitives import rect_triangles, Rect
 
 
-class GLAPP(App):
+class GLAPP(GlutApp):
     def init(self, size, positions):
         self.rect = Rect(*size)
 

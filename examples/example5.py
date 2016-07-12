@@ -4,11 +4,11 @@ from math import sin, cos
 import traceback
 import sys
 
-from gl2dl.app import App
+from gl2dl.app import GlutApp
 from gl2dl.primitives import Rect
 
 
-class GLAPP(App):
+class GLAPP(GlutApp):
     def init(self, data=None):
         self.data = data
         self.rect = Rect(100, 50, pivot=(50, 25))

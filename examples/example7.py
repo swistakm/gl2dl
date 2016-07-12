@@ -10,12 +10,12 @@ import sys
 
 import OpenGL.GLUT as glut
 
-from gl2dl.app import App
+from gl2dl.app import GlutApp
 from gl2dl.lights import GLight, ShadowMap
 from gl2dl.primitives import BaseRect, RectBatch
 
 
-class GLAPP(App):
+class GLAPP(GlutApp):
     def init(self, size, positions):
         self.rect_batch = RectBatch()
 

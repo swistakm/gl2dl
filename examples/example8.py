@@ -8,14 +8,14 @@ import sys
 
 import OpenGL.GLUT as glut
 
-from gl2dl.app import App
+from gl2dl.app import GlutApp
 from gl2dl.lights import GLight
 from gl2dl.primitives import BaseRect, RectBatch
 from gl2dl import blending
 from gl2dl.framebuffers import FrameBuffer, FrameBufferTexture
 
 
-class GLAPP(App):
+class GLAPP(GlutApp):
     def init(self, size, positions):
         self.rect_batch = RectBatch()
 

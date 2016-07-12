@@ -9,12 +9,12 @@ from time import time
 import traceback
 import sys
 
-from gl2dl.app import App
+from gl2dl.app import GlutApp
 from gl2dl.blending import alpha_blend
 from gl2dl.sprites import AnimatedSprite
 
 
-class GLAPP(App):
+class GLAPP(GlutApp):
     def init(self):
         self.numbers = AnimatedSprite(
             # our spritesheet consists of 16x16 squares
