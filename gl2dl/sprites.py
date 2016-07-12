@@ -97,7 +97,7 @@ class Sprite(object):
             )
 
         if file_name:
-            self._texture = self.TEXTURE_CLASS(file_name)
+            self._texture = self._setup_texture(file_name)
         else:
             self._texture = texture
 
@@ -117,6 +117,9 @@ class Sprite(object):
 
         # finally unbind VBO
         gl.glBindVertexArray(0)
+
+    def _setup_texture(self, file_name):
+        return self.TEXTURE_CLASS(file_name)
 
     def _setup_vbo(self, attribute_index):
         vertices = rect_triangles(
@@ -140,7 +143,7 @@ class Sprite(object):
 
         return uvb
 
-    def draw(self, x=0, y=0, scale=1.0):
+    def draw(self, x=0, y=0, scale=1.0, flip_x=False, flip_y=False):
         with self._shader as active:
             active['scale'] = scale
             active['model_view_projection'] = ortho(
@@ -148,6 +151,7 @@ class Sprite(object):
                 glut.glutGet(glut.GLUT_WINDOW_WIDTH),
                 glut.glutGet(glut.GLUT_WINDOW_HEIGHT),
                 x, y,
+                flip_x, flip_y
             )
 
             gl.glBindVertexArray(self.VAO)
@@ -162,18 +166,30 @@ class Sprite(object):
 
 
 class StaticAnimationAtlas(Texture):
-    def __init__(self, filename, mode="RGBA"):
+    def __init__(self, filename, mode="RGBA", subsheets=None):
+        self.subsheets = subsheets
         super(StaticAnimationAtlas, self).__init__(filename, mode)
 
-    def get_frame_offset(self, frame_index, width, height):
+    def _frame_from_subsheet(self, frame_index, subsheet_name):
+        if self.subsheets is None or subsheet_name is None:
+            return frame_index
+
+        else:
+            subsheet = self.subsheets[subsheet_name]
+            return subsheet[0] + (
+                int(frame_index) % (subsheet[1] - subsheet[0] + 1)
+            )
+
+    def get_frame_offset(self, frame_index, width, height, subsheet=None):
         # note: cap frames for frame index overflow so user can issue
         #       `draw(frame=time())` in animated sprites
+        frame_index = self._frame_from_subsheet(frame_index, subsheet)
         maxframes = int(self.width / width) * int(self.height / width)
 
         div, mod = divmod(width * (int(frame_index) % maxframes), self.width)
         # note: assume left-to-right top-to-bottom ordering of frames
         # note: image starts in top-left corner
-        pixel_y_offset = self.height - div * height
+        pixel_y_offset = self.height - (div + 1) * height
         pixel_x_offset = mod
 
         return (
@@ -210,9 +226,19 @@ class AnimatedSprite(Sprite):
     """
     TEXTURE_CLASS = StaticAnimationAtlas
 
-    def __init__(self, frame_size, file_name=None, texture=None, pivot=(0, 0)):
+    def __init__(
+            self, frame_size,
+            file_name=None,
+            texture=None,
+            pivot=(0, 0),
+            subsheets=None,
+    ):
         self.frame_size = frame_size
+        self.subsheets = subsheets
         super(AnimatedSprite, self).__init__(file_name, texture, pivot)
+
+    def _setup_texture(self, file_name):
+        return self.TEXTURE_CLASS(file_name, subsheets=self.subsheets)
 
     def _setup_vbo(self, attribute_index):
         vertices = rect_triangles(
@@ -233,8 +259,16 @@ class AnimatedSprite(Sprite):
         gl.glVertexAttribPointer(attribute_index, 2, gl.GL_FLOAT, gl.GL_FALSE, 0, None)  # noqa
         return uvb
 
-    def draw(self, x=0, y=0, scale=1.0, frame=0):
+    def draw(
+            self,
+            x=0, y=0,
+            scale=1.0,
+            frame=0, subsheet=None,
+            flip_x=False, flip_y=False
+    ):
         with self._shader as active:
-            active['offset'] = self._texture.get_frame_offset(frame, *self.frame_size)  # noqa
+            active['offset'] = self._texture.get_frame_offset(
+                frame, *self.frame_size, subsheet=subsheet
+            )  # noqa
 
-        super(AnimatedSprite, self).draw(x, y, scale)
+        super(AnimatedSprite, self).draw(x, y, scale, flip_x, flip_y)

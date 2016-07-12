@@ -19,7 +19,7 @@ def rect_triangles(x1, y1, x2, y2):
     ], dtype=np.float32)
 
 
-def ortho(width, height, x=0, y=0):
+def ortho(width, height, x=0, y=0, flip_x=False, flip_y=False):
     """
     Return orthographic projection matrix
 
@@ -29,13 +29,19 @@ def ortho(width, height, x=0, y=0):
     :param y: y position of object
     :return: 4x4 np.ndarray
     """
-
     matrix = np.array([
         [2./width, 0,         0,  -(2. * -x + width)/width],
         [0,        2./height, 0,  -(2. * -y + height)/height],
         [0,        0,         -2, -1],
         [0,        0,         0,  1.],
     ], dtype=np.float32)
+
+    if flip_x:
+        matrix[0, 0] *= -1
+
+    if flip_y:
+        matrix[1, 1] *= -1
+
     return matrix
 
 
