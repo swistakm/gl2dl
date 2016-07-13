@@ -7,6 +7,8 @@ import OpenGL.GL as gl
 import OpenGL.GLUT as glut
 import glfw
 
+from . import compat
+
 
 class WindowState(object):
     """ Semi-global window state for accessing GL context variables
@@ -204,15 +206,22 @@ class GlfwApp(BaseApp):
         window_name='gl2dl rocks!',
         **kwargs
     ):
+        compat.enable_glfw_errors_propagation()
+
         if not glfw.init():
             print("Could not initialize OpenGL context")
             self.on_exit()
 
+        # OS X supports only forward-compatible core profiles from 3.2
+        glfw.window_hint(glfw.CONTEXT_VERSION_MAJOR, 3)
+        glfw.window_hint(glfw.CONTEXT_VERSION_MINOR, 2)
+        glfw.window_hint(glfw.OPENGL_FORWARD_COMPAT, 1)
+        glfw.window_hint(glfw.OPENGL_PROFILE, glfw.OPENGL_CORE_PROFILE)
         # Create a windowed mode window and its OpenGL context
+
         self.window = glfw.create_window(
             width, height, window_name, None, None
         )
-
         if not self.window:
             glfw.terminate()
             print("Could not initialize Window")
@@ -221,7 +230,6 @@ class GlfwApp(BaseApp):
         # Make the window's context current
         glfw.make_context_current(self.window)
         window.attach_context(self.GlfwWindowContext(self.window))
-
         glfw.set_key_callback(self.window, self._keyboard_callback)
         glfw.set_cursor_pos_callback(self.window, self._mouse_callback)
         glfw.set_window_size_callback(self.window, self._resize_callback)
@@ -253,6 +261,7 @@ class GlfwApp(BaseApp):
     def display(self):
         """User defined diplay handler stub"""
 
+    @compat.propagates
     def _keyboard_callback(self, window, key, scancode, action, mods):
         if self.ENABLE_DEFAULT_KEYBOARD_HOOKS:
             if key == 256:
@@ -260,9 +269,11 @@ class GlfwApp(BaseApp):
 
         self.on_key(key, scancode, action, mods)
 
+    @compat.propagates
     def _mouse_callback(self, window, x, y):
         self.on_mouse_move(x, y)
 
+    @compat.propagates
     def _resize_callback(self, window, width, height):
         gl.glViewport(0, 0, width, height)
         self.on_resize(width, height)
