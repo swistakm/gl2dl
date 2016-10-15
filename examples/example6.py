@@ -33,9 +33,6 @@ class GLAPP(GlfwApp):
         self.light.position = x, window.height - y
         self.light.radius = 200
 
-    def loop(self):
-        super(GLAPP, self).loop()
-
     def display(self):
         try:
             self.clear()
