@@ -6,15 +6,20 @@ Example of simple animated sprites.
 from itertools import cycle
 import random
 from time import time
-import traceback
-import sys
+from typing import Iterable, Iterator
 
-from gl2dl.app import GlutApp, GlfwApp
+from gl2dl.app import GlfwApp
 from gl2dl.blending import alpha_blend
 from gl2dl.sprites import AnimatedSprite
 
 
-class GLAPP(GlfwApp):
+class App(GlfwApp):
+    numbers: AnimatedSprite
+    miner: AnimatedSprite
+    subsheets: Iterator[str]
+    current_subsheet: str
+    flip_x: bool
+
     def init(self):
         self.numbers = AnimatedSprite(
             # our spritesheet consists of 16x16 squares
@@ -40,6 +45,7 @@ class GLAPP(GlfwApp):
         self.subsheets = cycle(self.miner.subsheets.keys())
         self.current_subsheet = next(self.subsheets)
         self.flip_x = False
+
         print(self.current_subsheet)
 
     def on_key(self, key, *args):
@@ -51,22 +57,17 @@ class GLAPP(GlfwApp):
         )
 
     def display(self):
-        try:
-            self.clear((.9, .9, .9, 1))
-            # for the sake of simplicity we use time
-            # as a source of frames
-            self.numbers.draw(256, 256, scale=4, frame=time())
-            with alpha_blend():
-                self.miner.draw(
-                    256, 256 + 8 * 4,
-                    frame=time()*10,
-                    subsheet=self.current_subsheet,
-                    flip_x=self.flip_x
-                )
+        self.clear((.9, .9, .9, 1))
 
-        except Exception as err:
-            traceback.print_exc(file=sys.stdout)
-            exit(1)
+        self.numbers.draw(256, 256, scale=4, frame=time())
+        with alpha_blend():
+            self.miner.draw(
+                256, 256 + 8 * 4,
+                frame=time()*10,
+                subsheet=self.current_subsheet,
+                flip_x=self.flip_x
+            )
+
 
 if __name__ == '__main__':
-    GLAPP().loop()
+    App().loop()

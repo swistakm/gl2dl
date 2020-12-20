@@ -14,7 +14,7 @@ def _errcheck(result, func, args):
     if _glfw_errors[0] is not None:
         _glfw_errors[0], error = None, _glfw_errors[0]
         if isinstance(error, tuple):
-            raise error[0], error[1], error[2]
+            raise RuntimeError(error[0], error[1], error[2])
         else:
             raise error
 

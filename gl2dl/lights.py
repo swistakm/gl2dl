@@ -174,7 +174,7 @@ class GLight(object):
         {
             // note: origin of gl_FragCoord is the lower-left corner
             //       and light_position is described in window space
-            float distance = length(light_position - gl_FragCoord.xy);
+            float distance = length(light_position * 2 - gl_FragCoord.xy);
             float attenuation = (
                 (intensity * pow(2, falloff - 1)) /
                 pow((distance/radius + 1), falloff + 1)

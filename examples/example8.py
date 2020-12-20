@@ -3,17 +3,27 @@
 This example shows that there is need to draw rects in batches!
 """
 import random
-import traceback
-import sys
+from typing import List
 
-from gl2dl.app import GlutApp, GlfwApp
+import glfw
+from gl2dl.app import GlfwApp
 from gl2dl.lights import GLight
 from gl2dl.primitives import BaseRect, RectBatch
 from gl2dl import blending
 from gl2dl.framebuffers import FrameBuffer, FrameBufferTexture
 from gl2dl.app import window
+from gl2dl.sprites import Sprite
 
-class GLAPP(GlfwApp):
+
+class App(GlfwApp):
+    rect_batch: RectBatch
+    light: GLight
+    static_lights: List[GLight]
+    fb: FrameBuffer
+    fb_texture: FrameBufferTexture
+    lights_sprite: Sprite
+    fb_scale: float
+
     def init(self, size, positions):
         self.rect_batch = RectBatch()
 
@@ -22,44 +32,37 @@ class GLAPP(GlfwApp):
 
         occluders = self.rect_batch.get_triangles()
 
-        self.mouse_light = GLight((1, 0, 0), (1, 1,), occluders)
+        self.light = GLight((1, 0, 0), (1, 1,), occluders)
         self.static_lights = [
             GLight((0, 1, 0), (100, 100,), occluders),
-            GLight((0, 0, 1), (400, 100,), occluders)
+            GLight((0, 0, 1), (200, 200,), occluders)
         ]
 
-        self.framebuffer = FrameBuffer()
-        self.fb_texture = FrameBufferTexture(512, 512)
+        self.fb = FrameBuffer()
+        self.fb_texture = FrameBufferTexture(*glfw.get_framebuffer_size(self.window))
         self.lights_sprite = self.fb_texture.as_sprite()
+        self.fb_scale = 1 / (sum(glfw.get_window_content_scale(self.window)) / 2)
 
     def on_mouse_move(self, x, y):
-        self.mouse_light.position = x, window.height - y
-
-    def loop(self):
-        super(GLAPP, self).loop()
+        y = window.height - y
+        self.light.position = x, y
 
     def display(self):
-        try:
+        self.clear()
+
+        with self.fb.to_texture(self.fb_texture):
             self.clear()
 
-            with self.framebuffer.to_texture(self.fb_texture):
-                self.mouse_light.draw()
-
-            self.lights_sprite.draw(0, 0, scale=1)
-
+        with self.fb.to_texture(self.fb_texture):
             for light in self.static_lights:
-                with self.framebuffer.to_texture(self.fb_texture):
+                with blending.blending(mode=blending.Mode.MAX):
                     light.draw()
 
-                with blending.blending(mode=blending.Mode.MAX):
-                    self.lights_sprite.draw(0, 0, scale=1)
-
-            # note: we are drawing only boxes so no blending required
+            with blending.blending(mode=blending.Mode.MAX):
+                self.light.draw()
             self.rect_batch.draw()
 
-        except Exception as err:
-            traceback.print_exc(file=sys.stdout)
-            exit(1)
+        self.lights_sprite.draw(0, 0, scale=self.fb_scale)
 
 
 if __name__ == '__main__':
@@ -71,7 +74,6 @@ if __name__ == '__main__':
         for y in range(5)
     ]
 
-    app = GLAPP(size=size, positions=positions)
-
+    app = App(size=size, positions=positions)
     app.loop()
 

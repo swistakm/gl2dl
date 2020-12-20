@@ -2,18 +2,18 @@
 """
 This example shows that there is need to draw rects in batches!
 """
-import traceback
-import sys
-
 import numpy as np
 
-from gl2dl.app import GlutApp, GlfwApp
+from gl2dl.app import GlfwApp
 from gl2dl.lights import GLight
 from gl2dl.primitives import rect_triangles, Rect
 from gl2dl.app import window
 
 
-class GLAPP(GlfwApp):
+class App(GlfwApp):
+    rect: Rect
+    light: GLight
+
     def init(self, size, positions):
         self.rect = Rect(*size)
 
@@ -34,21 +34,13 @@ class GLAPP(GlfwApp):
         self.light.radius = 200
 
     def display(self):
-        try:
-            self.clear()
-            self.light.draw()
-            for position in positions:
-                self.rect.draw(*position, color=(1, 1, 1))
+        self.clear()
+        self.light.draw()
+        for position in positions:
+            self.rect.draw(*position, color=(1, 1, 1))
 
-        except Exception as err:
-            traceback.print_exc(file=sys.stdout)
-            exit(1)
 
 if __name__ == '__main__':
     size = 20, 20
-
-    positions = [
-        (x * 50, y * 50) for x in range(10) for y in range(10)
-    ]
-
-    GLAPP(size=size, positions=positions).loop()
+    positions = [(x * 50, y * 50) for x in range(10) for y in range(10)]
+    App(size=size, positions=positions).loop()

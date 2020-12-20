@@ -7,6 +7,12 @@ import OpenGL.GL as gl
 import OpenGL.GLUT as glut
 import glfw
 
+try:
+    import imgui
+    import imgui.integrations.glfw
+except ImportError:
+    imgui = None
+
 from . import compat
 
 
@@ -38,6 +44,7 @@ class WindowState(object):
     @property
     def height(self):
         return self._attached_context.height
+
 
 window = WindowState()
 
@@ -236,12 +243,9 @@ class GlfwApp(BaseApp):
         super(GlfwApp, self).__init__(**kwargs)
 
     def loop(self):
-        # Loop until the user closes the window
         while not glfw.window_should_close(self.window):
-            # Render here, e.g. using pyOpenGL
-            self._display()
-            # Poll for and process events
             glfw.poll_events()
+            self._display()
 
         glfw.terminate()
         self.on_exit()
@@ -278,4 +282,30 @@ class GlfwApp(BaseApp):
         gl.glViewport(0, 0, width, height)
         self.on_resize(width, height)
 
+
+class ImguiApp(GlfwApp):
+    def __init__(self, *args,  **kwargs):
+        if imgui is None:
+            raise RuntimeError("imgui not available")
+
+        super().__init__(*args, **kwargs)
+        self.imgui_context = imgui.create_context()
+        self.renderer = imgui.integrations.glfw.GlfwRenderer(self.window)
+
+    def _display(self):
+        try:
+            self.renderer.process_inputs()
+            imgui.new_frame()
+            self.display()
+            imgui.render()
+            self.renderer.render(imgui.get_draw_data())
+
+        finally:
+            gl.glBindVertexArray(0)
+            gl.glUseProgram(0)
+
+            gl.glBindBuffer(gl.GL_ARRAY_BUFFER, 0)
+            gl.glBindFramebuffer(gl.GL_FRAMEBUFFER, 0)
+
+            glfw.swap_buffers(self.window)
 

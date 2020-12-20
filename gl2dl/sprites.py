@@ -23,6 +23,7 @@ class Texture(object):
         # todo: consolidate contract, consider inheriting from int or GLuint
         # todo: and maybe using __new__ to create new "ints" objects
         # todo: see OpenGL.GL.shaders.ShaderProgram for reference
+        # todo: consider storing that as texture_id
         self.texture = gl.glGenTextures(1)
         gl.glBindTexture(gl.GL_TEXTURE_2D, self.texture)
         # note: check what it does!
@@ -162,6 +163,18 @@ class Sprite(object):
 
             # note: sprite polygon has always 6 vertices
             gl.glDrawArrays(gl.GL_TRIANGLES, 0, 6)
+
+    @property
+    def texture_id(self):
+        return self._texture.texture
+
+    @property
+    def width(self):
+        return self._texture.width
+
+    @property
+    def height(self):
+        return self._texture.height
 
 
 class StaticAnimationAtlas(Texture):
