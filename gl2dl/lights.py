@@ -148,6 +148,7 @@ class ShadowMap(object):
 
 
 class GLight(object):
+    # todo: add bleed param by moving occluder shadows on axis
     vertex_code = """
         #version 330 core
 

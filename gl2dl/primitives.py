@@ -158,6 +158,7 @@ class Triangles:
 
 
 class Rect(BaseRect):
+    # todo: convert to traingle base
     vertex_code = """
         #version 330 core
 

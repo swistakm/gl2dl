@@ -6,7 +6,7 @@ Example of simple animated sprites.
 from itertools import cycle
 import random
 from time import time
-from typing import Iterable, Iterator
+from typing import Iterator
 
 from gl2dl.app import GlfwApp
 from gl2dl.blending import alpha_blend
