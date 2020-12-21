@@ -1,9 +1,13 @@
 # -*- coding: utf-8 -*-
+import ctypes
+from dataclasses import dataclass
+
 from OpenGL import GL as gl
 import numpy as np
 
 from .shaders import ShaderProgram
 from .app import window
+
 
 def rect_triangles(x1, y1, x2, y2):
     return np.array([
@@ -61,6 +65,96 @@ class BaseRect(object):
     @classmethod
     def sized(cls, x, y, width, height):
         return cls(x, y, x + width, y + height)
+
+
+@dataclass
+class Vec1:
+    x: float
+
+
+@dataclass
+class Vec2:
+    x: float
+    y: float
+
+
+@dataclass
+class Vec3:
+    x: float
+    y: float
+    z: float
+
+
+@dataclass
+class Vec4:
+    x: float
+    y: float
+    z: float
+    w: float
+
+
+class Triangles:
+    vertex_code = """
+    #version 330 core
+
+    // Input vertex data, different for all executions of this shader.
+    layout(location = 0) in vec2 position;
+    layout(location = 1) in vec4 color;
+
+    uniform mat4 model_view_projection;
+    uniform float scale;
+
+    out vec4 v_color;
+
+    void main(){
+        gl_Position =  model_view_projection * vec4(position, 0, 1/scale);
+        v_color = color;
+    }
+    """
+
+    fragment_code = """
+        #version 330 core
+
+        in vec4 v_color;
+        out lowp vec4 out_color;
+
+        void main(){
+            out_color = v_color;
+        }
+    """
+
+    def __init__(self, data: np.array):
+        self._data = data
+
+        self._shader = ShaderProgram(self.vertex_code, self.fragment_code)
+
+        self.VAO = gl.glGenVertexArrays(1)
+        gl.glBindVertexArray(self.VAO)
+
+        self.VBO = gl.glGenBuffers(1)
+        gl.glBindBuffer(gl.GL_ARRAY_BUFFER, self.VBO)
+        gl.glBufferData(gl.GL_ARRAY_BUFFER, self._data.nbytes, self._data, gl.GL_STATIC_DRAW)  # noqa
+
+        # set position
+        gl.glEnableVertexAttribArray(0)
+        gl.glVertexAttribPointer(0, 2, gl.GL_FLOAT, gl.GL_FALSE, self._data.strides[0], ctypes.c_void_p(0))
+        # set color
+        gl.glEnableVertexAttribArray(1)
+        gl.glVertexAttribPointer(1, 4, gl.GL_FLOAT, gl.GL_FALSE, self._data.strides[0], ctypes.c_void_p(8))
+
+        # unbind VBO
+        gl.glBindVertexArray(0)
+
+    def draw(self, scale=1.):
+        with self._shader as active:
+            active['scale'] = scale
+            active['model_view_projection'] = ortho(
+                window.width,
+                window.height,
+                0, 0,
+            )
+            gl.glBindVertexArray(self.VAO)
+            gl.glDrawArrays(gl.GL_TRIANGLES, 0, len(self._data))
 
 
 class Rect(BaseRect):
@@ -184,4 +278,3 @@ class RectBatch(list):
 
             # draw rect triangles
             gl.glDrawArrays(gl.GL_TRIANGLES, 0, len(triangles))
-

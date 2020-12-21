@@ -27,12 +27,12 @@ class ShaderCompilationError(RuntimeError):
 
     def __init__(self, gl_msg, code):
         for re_ in self.SHADER_ERR_RES:
-            match = re_.match(gl_msg)
+            match = re_.match(gl_msg.decode())
 
             if match:
                 file_num, line_num = (int(x) for x in match.groups())
                 msg = "\n".join((
-                    gl_msg,
+                    gl_msg.decode(),
                     '---------',
                     self._get_code_excerpt(code, line_num-1, '>>> '),
                     '---------',

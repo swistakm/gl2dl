@@ -269,7 +269,7 @@ class GlfwApp(BaseApp):
     def _keyboard_callback(self, window, key, scancode, action, mods):
         if self.ENABLE_DEFAULT_KEYBOARD_HOOKS:
             if key == 256:
-                self.on_exit()
+                glfw.set_window_should_close(window, True)
 
         self.on_key(key, scancode, action, mods)
 
