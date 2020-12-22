@@ -124,26 +124,35 @@ class Triangles:
     """
 
     def __init__(self, data: np.array):
-        self._data = data
-
         self._shader = ShaderProgram(self.vertex_code, self.fragment_code)
 
-        self.VAO = gl.glGenVertexArrays(1)
-        gl.glBindVertexArray(self.VAO)
+        self.vao = gl.glGenVertexArrays(1)
+        gl.glBindVertexArray(self.vao)
 
-        self.VBO = gl.glGenBuffers(1)
-        gl.glBindBuffer(gl.GL_ARRAY_BUFFER, self.VBO)
-        gl.glBufferData(gl.GL_ARRAY_BUFFER, self._data.nbytes, self._data, gl.GL_STATIC_DRAW)  # noqa
+        self.vbo = gl.glGenBuffers(1)
+        gl.glBindBuffer(gl.GL_ARRAY_BUFFER, self.vbo)
 
         # set position
         gl.glEnableVertexAttribArray(0)
-        gl.glVertexAttribPointer(0, 2, gl.GL_FLOAT, gl.GL_FALSE, self._data.strides[0], ctypes.c_void_p(0))
+        gl.glVertexAttribPointer(0, 2, gl.GL_FLOAT, gl.GL_FALSE, 24, ctypes.c_void_p(0))
         # set color
         gl.glEnableVertexAttribArray(1)
-        gl.glVertexAttribPointer(1, 4, gl.GL_FLOAT, gl.GL_FALSE, self._data.strides[0], ctypes.c_void_p(8))
+        gl.glVertexAttribPointer(1, 4, gl.GL_FLOAT, gl.GL_FALSE, 24, ctypes.c_void_p(8))
 
-        # unbind VBO
+        # unbind vbo
         gl.glBindVertexArray(0)
+        self.data = data
+
+    @property
+    def data(self):
+        return np.copy(self._data)
+
+    @data.setter
+    def data(self, value):
+        self._data = value
+        if len(self.data):
+            gl.glBindBuffer(gl.GL_ARRAY_BUFFER, self.vbo)
+            gl.glBufferData(gl.GL_ARRAY_BUFFER, self._data.nbytes, self._data, gl.GL_STATIC_DRAW)  # noqa
 
     def draw(self, scale=1.):
         with self._shader as active:
@@ -153,7 +162,7 @@ class Triangles:
                 window.height,
                 0, 0,
             )
-            gl.glBindVertexArray(self.VAO)
+            gl.glBindVertexArray(self.vao)
             gl.glDrawArrays(gl.GL_TRIANGLES, 0, len(self._data))
 
 

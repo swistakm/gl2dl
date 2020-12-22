@@ -84,7 +84,7 @@ class BaseApp(object):
         atexit.register(quit_profiler_at_exit, profiler)
         profiler.enable()
 
-    def clear(self, color=(0, 0, 0, 0)):
+    def clear(self, color=(0, 0, 0, 1)):
         """Clear the windown buffer"""
         gl.glClearColor(*color)
         gl.glClear(gl.GL_COLOR_BUFFER_BIT)
