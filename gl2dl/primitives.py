@@ -123,8 +123,9 @@ class Triangles:
         }
     """
 
-    def __init__(self, data: np.array):
+    def __init__(self, data: np.array, fb_scale: float = 1.):
         self._shader = ShaderProgram(self.vertex_code, self.fragment_code)
+        self._fb_scale = fb_scale
 
         self.vao = gl.glGenVertexArrays(1)
         gl.glBindVertexArray(self.vao)
@@ -158,8 +159,8 @@ class Triangles:
         with self._shader as active:
             active['scale'] = scale
             active['model_view_projection'] = ortho(
-                window.width,
-                window.height,
+                window.width * self._fb_scale,
+                window.height * self._fb_scale,
                 0, 0,
             )
             gl.glBindVertexArray(self.vao)
